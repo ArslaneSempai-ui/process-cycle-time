@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Onze jours, et personne n'y a touché pendant neuf</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23fbfaf7'/%3E%3Crect x='2' y='4' width='12' height='1' fill='%23111'/%3E%3Crect x='2' y='7' width='12' height='1' fill='%23111'/%3E%3Crect x='2' y='11' width='12' height='2' fill='%23111'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="registre.css" />
+</head>
+<body>
+<main>
+  <div class="haut">
+    <div><h1 id="h1"></h1><p class="lede" id="lede"></p></div>
+    <div class="lang"><button id="fr" type="button">FR</button><button id="en" type="button">EN</button></div>
+  </div>
+<p class="renvoi" style="margin-bottom:1.5rem">
+This runs entirely in your browser — no server, nothing leaves your machine. The event log is
+<b>synthetic and seeded</b>. <b>Set the cost of a day of delay to zero</b>, at the bottom —
+which is what happens when nobody can name it — and watch the value of the same work fall by
+a factor of nine. <a href="https://github.com/ArslaneSempai-ui/process-cycle-time">Source and method</a>.
+</p>
+
+  <div class="chiffres" id="tete"></div>
+  <div id="alerte"></div>
+
+  <h2 id="titreCohortes"></h2>
+  <div id="cohortes"></div>
+
+  <h2 id="titreRoutes"></h2>
+  <div id="routes"></div>
+
+  <h2 id="titreEtapes"></h2>
+  <div id="etapes"></div>
+
+  <h2 id="titreHyp"></h2>
+  <div id="hypotheses"></div>
+
+  <p class="renvoi" id="provenanceLegende"></p>
+</main>
+
+<script type="module">
+import { generate } from "./js/events.js";
+import { variants, conformance, short } from "./js/paths.js";
+import { perCase, perStep, overall } from "./js/time.js";
+import { cohorts, costOfRework } from "./js/rework.js";
+import { totalValue } from "./js/sensitivity.js";
+import { ASSUMPTIONS, BOUNDS } from "./js/assumptions.js";
+
+const events = generate();
+const times = perCase(events);
+const allVariants = variants(events);
+const TOP = 8;
+let assumptions = { ...ASSUMPTIONS };
+
+const etat = () => {
+  const total = totalValue(assumptions);
+  const atZero = totalValue({ ...assumptions, costPerDayOfDelay: 0 });
+  return {
+    overall: overall(times),
+    cohorts: cohorts(times),
+    conformance: conformance(events),
+    variants: allVariants.slice(0, TOP).map((v) => ({ ...v, short: short(v.path) })),
+    moreVariants: Math.max(0, allVariants.length - TOP),
+    steps: perStep(events),
+    rework: costOfRework(times, assumptions),
+    value: { total, atZero, factor: atZero === 0 ? Infinity : total / atZero },
+    assumptions, bounds: BOUNDS,
+  };
+};
+
+window.LOCAL = async (chemin, corps) => {
+  if (chemin === "/api/etat") return etat();
+  if (chemin === "/api/hypotheses") {
+    if (corps.remise) assumptions = { ...ASSUMPTIONS };
+    else for (const [cle, [min, max]] of Object.entries(BOUNDS)) {
+      const v = corps[cle];
+      if (typeof v === "number" && Number.isFinite(v)) {
+        assumptions = { ...assumptions, [cle]: Math.min(max, Math.max(min, v)) };
+      }
+    }
+    return etat();
+  }
+  return {};
+};
+</script>
+<script type="module">
+const $ = (s) => document.querySelector(s);
+const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+
+/*
+ * One screen, two hosts.
+ *
+ * Locally this talks to the Node server; published there is none, and `window.LOCAL`
+ * answers the same routes with the same shapes. One file rather than two means the hosted
+ * demo cannot drift from the tool.
+ */
+const api = async (chemin, corps) =>
+  window.LOCAL ? window.LOCAL(chemin, corps)
+    : (await fetch(chemin, corps
+        ? { method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify(corps) } : {})).json();
+
+/* The engine builds no sentences: it returns structures and the screen phrases them. */
+const T = {
+  fr: {
+    h1: "Onze jours, et personne n'y a touché pendant neuf",
+    lede: "Un rapport de processus donne une moyenne et un temps par étape. Les deux sont vrais et aucun ne dit quoi faire.",
+
+    releve: "Le processus, mesuré",
+    moyenne: "moyenne de bout en bout", mediane: "médiane", p90: "90e centile",
+    travail: "temps réellement travaillé", attente: "part où personne n'y touche",
+    jours: "jours", heures: "h",
+
+    alerte: (moy, propre, sale) => `<b>La moyenne décrit aucun dossier.</b> Elle est de ${moy} jours. Les dossiers qui ne sont jamais revenus finissent en ${propre} ; ceux revenus deux fois prennent ${sale}. Une cible posée sur la moyenne est atteinte par tous ceux qui n'ont jamais eu de problème.`,
+
+    titreCohortes: "Les deux populations dans la moyenne",
+    colCohorte: "", colDossiers: "dossiers", colPart: "part", colMoyJours: "moyenne (j)",
+    colMedJours: "médiane", colTravaille: "travaillé", colFois: "× un dossier propre",
+    cohortesQuoi: "Ce qui sépare les deux n'est ni la taille du dossier ni le soin de l'analyste : c'est <b>si le dossier est revenu</b>. Avant de chercher à accélérer une étape, il faut demander combien de dossiers l'ont faite deux fois.",
+
+    titreRoutes: "Les chemins réellement pris",
+    routesQuoi: (n, conf, quatre) => `La procédure décrit une route. <b>${conf} des dossiers l'ont suivie exactement.</b> Il y a ${n} routes distinctes, et il en faut ${quatre} pour couvrir quatre cinquièmes des dossiers.`,
+    colCas: "dossiers", colRoute: "route", documente: "documenté",
+    plusDeRoutes: (n) => `${n} autres routes sous celles-ci.`,
+
+    titreEtapes: "Ce qu'un rapport par étape rate",
+    etapesQuoi: "Une moyenne par étape divise les minutes par <b>occurrences</b>, pas par dossiers. Une étape qui se répète coûte plus qu'annoncé, et aucun outil de reporting ne calcule l'autre colonne.",
+    colActivite: "activité", colParDossier: "fois / dossier", colRapport: "le rapport dit",
+    colReel: "coûte par dossier", colAttenteAvant: "attente médiane avant",
+
+    titreHyp: "Les hypothèses",
+    hypQuoi: "Le journal d'événements est mesuré. Ce qui le transforme en décision ne l'est pas — et le chiffre le moins connaissable est celui qui décide.",
+    loadedHourlyCost: "Coût chargé d'une heure d'analyste ($)",
+    casesPerYear: "Dossiers par an",
+    costPerDayOfDelay: "Coût d'un jour de retard, par dossier ($)",
+    valeur: "Retirer toute la reprise vaudrait, par an",
+    zero: (v, base, f) => `À zéro — ce qui arrive quand personne ne sait nommer ce chiffre — le même travail vaut ${v} au lieu de ${base}. <b>Un facteur ${f}</b>, et la différence entre un projet financé et un projet qui ne l'est pas.`,
+    defaut: "Revenir aux hypothèses de départ",
+
+    provenance: "Chaque chiffre de cette page est <b>mesuré</b> à partir du journal d'événements, <b>supposé</b> parce que personne ici ne peut le connaître, ou <b>choisi</b> par moi. Aucun n'est retrouvé dans une source publique. Le README dit lequel est lequel, un par un.",
+  },
+  en: {
+    h1: "Eleven days, and nobody worked on it for nine",
+    lede: "A process report gives you an average and a time per step. Both are true and neither says what to do.",
+
+    releve: "The process, measured",
+    moyenne: "mean end to end", mediane: "median", p90: "90th percentile",
+    travail: "time actually worked", attente: "share nobody was touching it",
+    jours: "days", heures: "h",
+
+    alerte: (moy, propre, sale) => `<b>The mean describes no case.</b> It is ${moy} days. Cases that never came back finish in ${propre}; cases that came back twice take ${sale}. A target set on the mean is met by every case that never had a problem.`,
+
+    titreCohortes: "The two populations inside the average",
+    colCohorte: "", colDossiers: "cases", colPart: "share", colMoyJours: "mean (d)",
+    colMedJours: "median", colTravaille: "worked", colFois: "× a clean case",
+    cohortesQuoi: "What separates the two is neither the size of the file nor the diligence of the analyst: it is <b>whether the case came back</b>. Before asking how to make a step faster, ask how many cases had to do it twice.",
+
+    titreRoutes: "The routes actually taken",
+    routesQuoi: (n, conf, quatre) => `The procedure describes one route. <b>${conf} of cases followed it exactly.</b> There are ${n} distinct routes, and it takes ${quatre} of them to cover four fifths of the cases.`,
+    colCas: "cases", colRoute: "route", documente: "documented",
+    plusDeRoutes: (n) => `${n} further routes below these.`,
+
+    titreEtapes: "What a step report misses",
+    etapesQuoi: "A step average divides minutes by <b>occurrences</b>, not by cases. A step that repeats costs more than reported, and no reporting tool computes the other column.",
+    colActivite: "activity", colParDossier: "times / case", colRapport: "a report says",
+    colReel: "costs per case", colAttenteAvant: "median wait before",
+
+    titreHyp: "The assumptions",
+    hypQuoi: "The event log is measured. What turns it into a decision is not — and the least knowable figure is the one that decides.",
+    loadedHourlyCost: "Loaded cost of an analyst hour ($)",
+    casesPerYear: "Cases per year",
+    costPerDayOfDelay: "Cost of one day of delay, per case ($)",
+    valeur: "Removing all the rework would be worth, a year",
+    zero: (v, base, f) => `At zero — which is what happens when nobody can name the figure — the same work is worth ${v} rather than ${base}. <b>A factor of ${f}</b>, and the difference between a project that gets funded and one that does not.`,
+    defaut: "Reset the assumptions",
+
+    provenance: "Every figure on this page is <b>measured</b> from the event log, <b>assumed</b> because nobody here can know it, or <b>chosen</b> by me. None is retrieved from a public source. The README says which is which, one by one.",
+  },
+};
+
+let langue = localStorage.getItem("langue") ?? "fr";
+const t = () => T[langue];
+let etat = null, occupe = false;
+
+const nb = (n) => Math.round(n).toLocaleString("en-GB");
+const dollars = (n) => "$" + nb(n);
+const pc = (x) => (x * 100).toFixed(1) + " %";
+
+function blocTete() {
+  const L = t(), o = etat.overall;
+  const ligne = (k, v) => `<div class="ligne"><span class="intitule">${esc(k)}</span><span class="valeur">${v}</span></div>`;
+  $("#tete").innerHTML = `<section class="feuillet">
+    <div class="titre">${esc(L.releve)}</div>
+    ${ligne(L.moyenne, o.meanLeadDays.toFixed(1) + " " + L.jours)}
+    ${ligne(L.mediane, o.medianLeadDays.toFixed(1))}
+    ${ligne(L.p90, o.p90LeadDays.toFixed(1))}
+    ${ligne(L.travail, o.meanTouchHours.toFixed(1) + " " + L.heures)}
+    <div class="ligne total"><span class="intitule">${esc(L.attente)}</span>
+      <span class="valeur">${pc(o.waitingShare)}</span></div>
+  </section>`;
+}
+
+function blocAlerte() {
+  const L = t(), c = etat.cohorts, o = etat.overall;
+  const propre = c.find((x) => x.passes === 0), sale = c[c.length - 1];
+  $("#alerte").innerHTML = `<div class="renvoi attention">${L.alerte(
+    o.meanLeadDays.toFixed(1), propre.meanLeadDays.toFixed(1) + " " + L.jours,
+    sale.meanLeadDays.toFixed(1))}</div>`;
+}
+
+function blocCohortes() {
+  const L = t();
+  $("#titreCohortes").textContent = L.titreCohortes;
+  const lignes = etat.cohorts.map((x) => `<tr${x.passes === 0 ? ' class="ici"' : ""}>
+    <td>${esc(x.label)}</td><td>${nb(x.cases)}</td><td>${pc(x.share)}</td>
+    <td><b>${x.meanLeadDays.toFixed(1)}</b></td><td>${x.medianLeadDays.toFixed(1)}</td>
+    <td>${x.meanTouchHours.toFixed(1)} ${esc(L.heures)}</td><td>${x.timesLonger.toFixed(1)}×</td></tr>`).join("");
+  $("#cohortes").innerHTML = `<div class="feuillet">
+    <div class="defile"><table><thead><tr>
+      <th>${esc(L.colCohorte)}</th><th>${esc(L.colDossiers)}</th><th>${esc(L.colPart)}</th>
+      <th>${esc(L.colMoyJours)}</th><th>${esc(L.colMedJours)}</th><th>${esc(L.colTravaille)}</th>
+      <th>${esc(L.colFois)}</th></tr></thead><tbody>${lignes}</tbody></table></div>
+    <div class="quoi">${L.cohortesQuoi}</div>
+  </div>`;
+}
+
+function blocRoutes() {
+  const L = t(), c = etat.conformance;
+  $("#titreRoutes").textContent = L.titreRoutes;
+  const lignes = etat.variants.map((v) => `<tr${v.documented ? ' class="ici"' : ""}>
+    <td>${nb(v.cases)}</td><td>${pc(v.share)}</td>
+    <td><code>${esc(v.short)}</code>${v.documented ? " ← " + esc(L.documente) : ""}</td></tr>`).join("");
+  $("#routes").innerHTML = `<div class="feuillet">
+    <div class="quoi">${L.routesQuoi(c.distinctPaths, pc(c.share), c.pathsForFourFifths)}</div>
+    <div class="defile"><table><thead><tr>
+      <th>${esc(L.colCas)}</th><th>${esc(L.colPart)}</th><th>${esc(L.colRoute)}</th>
+    </tr></thead><tbody>${lignes}</tbody></table></div>
+    ${etat.moreVariants > 0 ? `<div class="renvoi">${esc(L.plusDeRoutes(etat.moreVariants))}</div>` : ""}
+  </div>`;
+}
+
+function blocEtapes() {
+  const L = t();
+  $("#titreEtapes").textContent = L.titreEtapes;
+  const lignes = etat.steps.map((s) => `<tr${s.perCase > 1.1 ? ' class="ici"' : ""}>
+    <td>${esc(s.activity)}</td><td>${s.perCase.toFixed(2)}</td>
+    <td>${s.meanPerOccurrence.toFixed(0)} min</td><td><b>${s.meanPerCase.toFixed(0)} min</b></td>
+    <td>${(s.medianWaitBefore / 480).toFixed(1)} ${esc(L.jours[0])}</td></tr>`).join("");
+  $("#etapes").innerHTML = `<div class="feuillet">
+    <div class="quoi">${L.etapesQuoi}</div>
+    <div class="defile"><table><thead><tr>
+      <th>${esc(L.colActivite)}</th><th>${esc(L.colParDossier)}</th><th>${esc(L.colRapport)}</th>
+      <th>${esc(L.colReel)}</th><th>${esc(L.colAttenteAvant)}</th>
+    </tr></thead><tbody>${lignes}</tbody></table></div>
+  </div>`;
+}
+
+function blocHypotheses() {
+  const L = t();
+  $("#titreHyp").textContent = L.titreHyp;
+  const champs = Object.keys(etat.bounds).map((cle) => {
+    const [min, max] = etat.bounds[cle];
+    return `<div><label for="${cle}">${esc(L[cle])}</label>
+      <input type="number" id="${cle}" value="${etat.assumptions[cle]}" min="${min}" max="${max}" /></div>`;
+  }).join("");
+
+  const v = etat.value;
+  $("#hypotheses").innerHTML = `<div class="feuillet">
+    <div class="quoi">${esc(L.hypQuoi)}</div>
+    <div class="grille">${champs}</div>
+    <div class="ligne total"><span class="intitule">${esc(L.valeur)}</span>
+      <span class="valeur">${dollars(v.total)}</span></div>
+    <div class="renvoi ${v.factor > 2 ? "attention" : ""}">${L.zero(dollars(v.atZero), dollars(v.total), v.factor.toFixed(1))}</div>
+    <button class="b" id="defaut" type="button">${esc(L.defaut)}</button>
+  </div>`;
+
+  for (const cle of Object.keys(etat.bounds)) {
+    $(`#${cle}`).onchange = (e) => envoyer("/api/hypotheses", { [cle]: Number(e.target.value) });
+  }
+  $("#defaut").onclick = () => envoyer("/api/hypotheses", { remise: true });
+}
+
+function dessiner() {
+  const L = t();
+  document.documentElement.lang = langue;
+  $("#h1").textContent = L.h1;
+  $("#lede").textContent = L.lede;
+  $("#provenanceLegende").innerHTML = L.provenance;
+  $("#fr").className = langue === "fr" ? "on" : "";
+  $("#en").className = langue === "en" ? "on" : "";
+  blocTete(); blocAlerte(); blocCohortes(); blocRoutes(); blocEtapes(); blocHypotheses();
+}
+
+async function envoyer(chemin, corps) {
+  if (occupe) return;
+  occupe = true;
+  try { etat = await api(chemin, corps ?? {}); dessiner(); }
+  finally { occupe = false; }
+}
+
+for (const l of ["fr", "en"]) {
+  $(`#${l}`).onclick = () => { langue = l; localStorage.setItem("langue", l); dessiner(); };
+}
+
+etat = await api("/api/etat");
+dessiner();
+</script>
+</body>
+</html>
