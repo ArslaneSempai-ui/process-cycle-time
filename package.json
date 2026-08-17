@@ -1,0 +1,27 @@
+{
+  "name": "process-cycle-time",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Eleven days, and nobody worked on it for nine of them.",
+  "scripts": {
+    "start": "node src/server.ts",
+    "paths": "node src/paths.ts",
+    "time": "node src/time.ts",
+    "rework": "node src/rework.ts",
+    "sensitivity": "node src/sensitivity.ts",
+    "adversarial": "node src/adversarial.ts",
+    "baselines": "node src/baselines.ts",
+    "figures": "node src/readme.ts",
+    "pages": "tsc -p tsconfig.web.json && node src/pages.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsc --noEmit && node src/readme.ts --check && node --test src/*.test.ts"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.0",
+    "@types/node": "^24.0.0"
+  }
+}
