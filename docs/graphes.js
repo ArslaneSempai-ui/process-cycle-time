@@ -415,7 +415,7 @@ export function empile({ items, fmt = String, aria }) {
  *          fmt?:(v:number)=>string, fmtX?:(v:number)=>string, hauteur?:number, aria:string,
  *          nomX?:string}} o
  */
-export function escalier({ marches, fmt = String, fmtX = String, hauteur = 210, aria }) {
+export function escalier({ marches, fmt = String, fmtX = String, hauteur = 210, aria, choix = false, iciTexte }) {
   if (!marches?.length) return "";
   const xs = marches.flatMap((m) => [m.de, m.a]);
   const eX = { bas: Math.min(...xs), haut: Math.max(...xs) };
@@ -432,14 +432,44 @@ export function escalier({ marches, fmt = String, fmtX = String, hauteur = 210, 
     svg += `<line class="grille" x1="${M.gauche}" y1="${y}" x2="${L - M.droite}" y2="${y}" />`
       + `<text class="grad" x="${M.gauche - 8}" y="${arr(y + 4)}" text-anchor="end">${ech(fmt(c))}</text>`;
   }
+  /*
+   * La marche retenue se marque sur toute la hauteur.
+   *
+   * Neuf marches sur dix valent zéro ici — le coût du vrai positif suivant reste nul
+   * longtemps, c'est le propos de la figure. Une marche à zéro fait deux pixels de haut :
+   * la mettre en avant par sa couleur revenait à ne rien montrer, et la rendre cliquable
+   * revenait à demander de viser un trait. La bande marque une *position*, pas une valeur.
+   */
+  for (const m of marches) {
+    if (!m.ici) continue;
+    svg += `<rect class="marche-ici" x="${px(m.de)}" y="${M.haut}"
+      width="${arr(Math.max(1, px(m.a) - px(m.de)))}" height="${arr(sol - M.haut)}" />`;
+    /* Sans mot écrit, une bande teintée se lit comme une valeur de plus. */
+    if (iciTexte) {
+      svg += `<text class="marche-ici-mot" x="${arr((px(m.de) + px(m.a)) / 2)}" y="${M.haut - 4}"
+        text-anchor="middle">${ech(iciTexte)}</text>`;
+    }
+  }
   for (const m of marches) {
     const g = px(m.de), d = px(m.a), y = py(m.valeur);
+    const lecture = ech(`<u>${fmtX(m.de)} → ${fmtX(m.a)}</u><br>${m.morte ? "—" : fmt(m.valeur)}`);
     svg += `<rect class="marche${m.ici ? " ici" : ""}${m.gratuite ? " gratuite" : ""}${m.morte ? " morte" : ""}" x="${g}" y="${y}"
       width="${arr(Math.max(1, d - g))}" height="${arr(Math.max(1, sol - y))}"
-      data-lecture="${ech(`<u>${fmtX(m.de)} → ${fmtX(m.a)}</u><br>${fmt(m.valeur)}`)}" />`;
-    svg += `<line class="dessus${m.gratuite ? " gratuite" : ""}${m.morte ? " morte" : ""}" x1="${g}" y1="${y}" x2="${d}" y2="${y}" />`;
+      ${choix ? "" : `data-lecture="${lecture}"`} />`;
+    svg += `<line class="dessus${m.ici ? " ici" : ""}${m.gratuite ? " gratuite" : ""}${m.morte ? " morte" : ""}" x1="${g}" y1="${y}" x2="${d}" y2="${y}" />`;
   }
   svg += `<line class="sol" x1="${M.gauche}" y1="${sol}" x2="${L - M.droite}" y2="${sol}" />`;
+
+  /* En dernier pour être au-dessus : c'est la colonne entière qui se vise, pas la marche. */
+  if (choix) {
+    for (const m of marches) {
+      svg += `<rect class="marche-zone" x="${px(m.de)}" y="${M.haut}"
+        width="${arr(Math.max(1, px(m.a) - px(m.de)))}" height="${arr(sol - M.haut)}"
+        data-choix="${m.de}"
+        data-lecture="${ech(`<u>${fmtX(m.de)} → ${fmtX(m.a)}</u><br>${m.morte ? "—" : fmt(m.valeur)}`)}" />`;
+    }
+  }
+
   const bornes = [...new Set(xs)].sort((a, b) => a - b);
   const saut = Math.ceil(bornes.length / 9);
   bornes.forEach((v, i) => {
@@ -507,10 +537,18 @@ export function histogramme({ bandes, seuil, fmt = String, fmtX = String, legend
     if (!(b.valeur > 0)) continue;
     const g = px(b.de), d = px(b.a), large = Math.max(1, d - g - 3);
     const y = py(b.valeur);
-    const lecture = ech(`<u>${fmtX(b.de)} – ${fmtX(b.a)}</u><br>${fmt(b.valeur)}`
+    /*
+     * En mode commande, pas de lecture au survol.
+     *
+     * La prise couvre le cadre pour que la ligne s'attrape n'importe où ; elle intercepte
+     * donc le survol des barres. Laisser les `data-lecture` en place serait promettre une
+     * lecture qui ne s'affiche jamais. Ce qu'elles disaient passe dans l'étiquette du
+     * seuil, qui, elle, suit la main.
+     */
+    const lecture = seuil?.saisissable ? "" : ech(`<u>${fmtX(b.de)} – ${fmtX(b.a)}</u><br>${fmt(b.valeur)}`
       + (fini(b.part) ? ` · ${fmt(b.part)}` : ""));
     svg += `<rect class="bande-hist" x="${arr(g + 1.5)}" y="${y}" width="${arr(large)}"
-      height="${arr(Math.max(1, sol - y))}" data-lecture="${lecture}" />`;
+      height="${arr(Math.max(1, sol - y))}"${lecture ? ` data-lecture="${lecture}"` : ""} />`;
     if (fini(b.part) && b.part > 0) {
       const h = Math.max(1, sol - py(b.part));
       svg += `<rect class="bande-part" fill="url(#${id})" x="${arr(g + 1.5)}" y="${arr(sol - h)}"
@@ -534,8 +572,16 @@ export function histogramme({ bandes, seuil, fmt = String, fmtX = String, legend
   }
 
   for (const v of seuil && fini(seuil.v) ? [x0, seuil.v, x1] : [x0, x1]) {
+    if (seuil && v !== seuil.v && Math.abs(px(v) - px(seuil.v)) < 42) continue;
     const ancrage = v === x0 ? "start" : v === x1 ? "end" : "middle";
     svg += `<text class="grad" x="${px(v)}" y="${sol + 18}" text-anchor="${ancrage}">${ech(fmtX(v))}</text>`;
+  }
+
+  /* La prise, en dernier pour être au-dessus : on attrape la ligne n'importe où dans le
+   * cadre, pas sur son trait. */
+  if (seuil?.saisissable && fini(seuil.v)) {
+    svg += `<rect class="carte-prise" x="${M.gauche}" y="${ciel}" width="${arr(L - M.gauche - M.droite)}"
+      height="${arr(sol - ciel)}" data-x0="${x0}" data-x1="${x1}" data-y0="0" data-y1="1" />`;
   }
 
   if (legende?.length) {
@@ -571,7 +617,7 @@ export function histogramme({ bandes, seuil, fmt = String, fmtX = String, legend
  *          lignes: Array<{nom:string, cellules:Array<boolean|null>, instables?:boolean[], bout?:string}>,
  *          legende?: Array<{texte:string, etat:string}>, aria:string}} o
  */
-export function grille({ colonnes, lignes, legende, aria }) {
+export function grille({ colonnes, lignes, legende, aria, choix = false, iciTexte }) {
   if (!colonnes?.length || !lignes?.length) return "";
   const cols = colonnes.map((c) => (typeof c === "string" ? { nom: c } : c));
   const GAUCHE = 122, DROITE = 54, HAUT = 16, LIGNE = 26, CELL = 18;
@@ -596,9 +642,24 @@ export function grille({ colonnes, lignes, legende, aria }) {
   const hauteur = HAUT + lignes.length * LIGNE + 22 + rangs * RANG_LEG + (rangs ? 6 : 0);
 
   let svg = "";
+  /*
+   * La ligne retenue, marquée sur toute la largeur.
+   *
+   * Quand les lignes *sont* les choix — une version par ligne —, deux listes déroulantes
+   * et un bouton posés à côté demandent au lecteur de refaire à la main le lien avec la
+   * figure qu'il regarde déjà.
+   */
+  lignes.forEach((l, i) => {
+    if (!l.ici) return;
+    const y = HAUT + i * LIGNE;
+    svg += `<rect class="grille-ici" x="${GAUCHE - 116}" y="${arr(y - 4)}" width="${arr(L - GAUCHE + 116 - 8)}" height="${CELL + 8}" />`;
+    if (iciTexte) {
+      svg += `<text class="marche-ici-mot" x="${L - DROITE + 10}" y="${y - 8}">${ech(iciTexte)}</text>`;
+    }
+  });
   lignes.forEach((l, i) => {
     const y = HAUT + i * LIGNE;
-    svg += `<text class="grille-nom" x="${GAUCHE - 10}" y="${y + CELL - 4}" text-anchor="end">${ech(l.nom)}</text>`;
+    svg += `<text class="grille-nom${l.ici ? " ici" : ""}" x="${GAUCHE - 10}" y="${y + CELL - 4}" text-anchor="end">${ech(l.nom)}</text>`;
     l.cellules.forEach((v, j) => {
       const avant = i > 0 ? lignes[i - 1].cellules[j] : null;
       /*
@@ -630,6 +691,16 @@ export function grille({ colonnes, lignes, legende, aria }) {
     if (j % saut && j !== cols.length - 1) return;
     svg += `<text class="grille-num" x="${arr(GAUCHE + j * pas + pas / 2)}" y="${yNum}" text-anchor="middle">${j + 1}</text>`;
   });
+
+  /* En dernier, donc au-dessus : c'est la ligne entière qui se vise, pas une case. */
+  if (choix) {
+    lignes.forEach((l, i) => {
+      if (l.choix === null || l.choix === undefined) return;
+      const y = HAUT + i * LIGNE;
+      svg += `<rect class="grille-zone" x="${GAUCHE - 116}" y="${arr(y - 4)}"
+        width="${arr(L - GAUCHE + 116 - 8)}" height="${CELL + 8}" data-choix="${ech(l.choix)}" />`;
+    });
+  }
 
   for (const c of cles) {
     const y = hauteur - 6 - (rangs - c.rang) * RANG_LEG;
@@ -731,8 +802,16 @@ export function populations({ groupes, seuil, fmtX = String, motRecouvrement, ar
 
   const marques = [x0, ...(seuil && fini(seuil.v) ? [seuil.v] : []), x1];
   for (const v of marques) {
+    if (seuil && fini(seuil.v) && v !== seuil.v && Math.abs(px(v) - px(seuil.v)) < 40) continue;
     const ancrage = v === x0 ? "start" : v === x1 ? "end" : "middle";
     svg += `<text class="grad" x="${px(v)}" y="${sol + 16}" text-anchor="${ancrage}">${ech(fmtX(v))}</text>`;
+  }
+
+  /* La prise, en dernier pour être au-dessus : la barre s'attrape n'importe où entre les
+   * deux populations qu'elle sépare, pas sur son trait. */
+  if (seuil?.saisissable && fini(seuil.v)) {
+    svg += `<rect class="carte-prise" x="${M.gauche}" y="${M.haut}" width="${arr(L - M.gauche - M.droite)}"
+      height="${arr(sol + 6 - M.haut)}" data-x0="${x0}" data-x1="${x1}" data-y0="0" data-y1="1" />`;
   }
 
   return cadre(svg, hauteur, aria) + "</figure>";
@@ -973,6 +1052,9 @@ export function saisir(racine, onDeplace, courant) {
     prise.addEventListener("blur", () => { if (prise.isConnected) delete racine.dataset.priseFocus; });
   }
   if (courant) {
+    /* Un curseur sans nom se lit « slider, 5.4 » : le lecteur d'écran dit la valeur et pas
+     * ce qu'elle règle. */
+    if (courant.nom) prise.setAttribute("aria-label", courant.nom);
     prise.setAttribute("aria-valuemin", d.x0);
     prise.setAttribute("aria-valuemax", d.x1);
     prise.setAttribute("aria-valuenow", String(Math.round(courant.x * 100) / 100));
@@ -1053,6 +1135,75 @@ export function partEcrite(dedans, total) {
   if (dedans === total) return "100 %";
   if (dedans === 0) return "0 %";
   return Math.min(99, Math.max(1, Math.round((100 * dedans) / total))) + " %";
+}
+
+/**
+ * Choisir parmi ce que la figure dessine déjà.
+ *
+ * Certaines grandeurs ne sont pas continues : un modèle qui a mesuré treize seuils n'a rien
+ * mesuré entre deux. Une ligne qu'on tire librement y promettrait une précision que
+ * personne n'a. Ici les choix *sont* les formes déjà dessinées — les marches d'un escalier,
+ * les cases d'une grille — et le lecteur pose la main dessus.
+ *
+ * Avantage sur une prise qui couvre le cadre : la lecture au survol survit, puisque c'est
+ * le même élément qui la porte.
+ */
+export function choisir(racine, onChoix, courant) {
+  const choix = [...racine.querySelectorAll("[data-choix]")];
+  if (!choix.length) return;
+  const val = (el) => el.dataset.choix;
+
+  if (!racine.dataset.choixBranche) {
+    racine.dataset.choixBranche = "1";
+    /* Le glissement se termine n'importe où, y compris hors de la figure. */
+    for (const f of ["pointerup", "pointercancel"])
+      window.addEventListener(f, () => { delete racine.dataset.choixTire; });
+  }
+
+  choix.forEach((el, i) => {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "radio");
+    el.setAttribute("aria-checked", String(String(courant) === val(el)));
+    el.addEventListener("focus", () => { racine.dataset.choixFoyer = val(el); });
+    /* Même précaution que pour la prise : un noeud retiré du document émet `blur`, et
+     * effacer le drapeau là-dessus perdrait le foyer à chaque flèche. */
+    el.addEventListener("blur", () => { if (el.isConnected) delete racine.dataset.choixFoyer; });
+    el.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      racine.dataset.choixTire = "1";
+      racine.dataset.choixFoyer = val(el);
+      el.dataset.dejaPris = "1";
+      onChoix(val(el));
+    });
+    /*
+     * Le clic simple compte aussi.
+     *
+     * Un pointeur émet `pointerdown` puis `click`, et le bloc n'a pas eu le temps d'être
+     * réécrit entre les deux : sans garde, la même marche partait deux fois. Mais une
+     * activation qui ne passe pas par un pointeur — un lecteur d'écran, un pilotage de
+     * capture — n'émet que `click`, et l'ignorer rendrait la figure inerte pour eux.
+     */
+    el.addEventListener("click", () => {
+      if (el.dataset.dejaPris) { delete el.dataset.dejaPris; return; }
+      racine.dataset.choixFoyer = val(el);
+      onChoix(val(el));
+    });
+    /* Passer la main sur la figure fait défiler les choix, comme sur un clavier de piano. */
+    el.addEventListener("pointerenter", () => { if (racine.dataset.choixTire) onChoix(val(el)); });
+    el.addEventListener("keydown", (e) => {
+      if (e.key === " " || e.key === "Enter") { e.preventDefault(); onChoix(val(el)); return; }
+      const d = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1, Home: -99, End: 99 }[e.key];
+      if (d === undefined) return;
+      e.preventDefault();
+      const suivant = choix[Math.min(choix.length - 1, Math.max(0, i + d))];
+      racine.dataset.choixFoyer = val(suivant);
+      onChoix(val(suivant));
+    });
+  });
+
+  /* Le bloc est réécrit à chaque choix : le foyer se repose sur le nouveau porteur. */
+  const vise = choix.find((el) => val(el) === racine.dataset.choixFoyer);
+  if (vise) vise.focus({ preventScroll: true });
 }
 
 /**
@@ -1148,7 +1299,7 @@ export function strates({ strates: liste, seuil, bas, haut, fmtX = String, compt
  *          series: Array<{nom:string, rangs:Array<{rang:number, valeur?:number}|number>, vedette?:boolean}>,
  *          fmt?:(v:number)=>string, aria:string, nomRang?:(r:number)=>string}} o
  */
-export function rangs({ colonnes, series, fmt = String, aria, nomRang }) {
+export function rangs({ colonnes, series, fmt = String, aria, nomRang, choix = false, iciTexte }) {
   if (!colonnes?.length || !series?.length) return "";
   const cols = colonnes.map((c) => (typeof c === "string" ? { titre: c } : c));
   const lig = series.map((s) => ({
@@ -1163,7 +1314,9 @@ export function rangs({ colonnes, series, fmt = String, aria, nomRang }) {
   const large = Math.max(...lig.map((s) => String(s.nom).length));
   const droite = Math.min(190, Math.max(72, large * 7 + 16));
   const gauche = 46;
-  const PAS = 42, HAUT = 26;
+  /* Le mot posé au-dessus de la colonne retenue a besoin de sa ligne : sans elle il se
+   * dessinait au-dessus du cadre, donc nulle part. */
+  const PAS = 42, HAUT = iciTexte ? 48 : 26;
   const hauteur = HAUT + (profond - 1) * PAS + 46;
   const px = (i) => arr(gauche + (cols.length === 1 ? 0 : (i / (cols.length - 1)) * (L - gauche - droite)));
   const py = (r) => arr(HAUT + (r - 1) * PAS);
@@ -1177,10 +1330,34 @@ export function rangs({ colonnes, series, fmt = String, aria, nomRang }) {
       .sort((a, b) => Math.min(...a.rangs.map((r) => r.rang)) - Math.min(...b.rangs.map((r) => r.rang)))[0];
   }
 
+  /* La bande d'une colonne : à mi-chemin de ses voisines, bornée par le cadre. */
+  const bandeX = (i) => {
+    /* Les bornes s'arrêtent au cadre : débordées, la bande recouvrait les rangs à gauche
+     * et les intitulés de séries à droite. */
+    const g = i === 0 ? gauche - 6 : (px(i - 1) + px(i)) / 2;
+    const d = i === cols.length - 1 ? L - droite + 6 : (px(i) + px(i + 1)) / 2;
+    return [arr(g), arr(d - g)];
+  };
+
   let svg = "";
+  /*
+   * La colonne retenue, marquée avant tout le reste.
+   *
+   * Quand les colonnes *sont* les choix — quatre scénarios côte à côte —, un bouton posé
+   * sous la figure demande au lecteur de faire le lien lui-même. La bande le fait à sa
+   * place, et le clic se prend là où le regard est déjà.
+   */
+  cols.forEach((c, i) => {
+    if (!c.ici) return;
+    const [x, w] = bandeX(i);
+    svg += `<rect class="rang-ici" x="${x}" y="${py(1) - 20}" width="${w}" height="${arr(py(profond) - py(1) + 40)}" />`;
+    if (iciTexte) {
+      svg += `<text class="marche-ici-mot" x="${arr(x + w / 2)}" y="${py(1) - 28}" text-anchor="middle">${ech(iciTexte)}</text>`;
+    }
+  });
   cols.forEach((c, i) => {
     svg += `<line class="rang-colonne" x1="${px(i)}" y1="${py(1) - 12}" x2="${px(i)}" y2="${py(profond) + 12}" />`
-      + `<text class="grad" x="${px(i)}" y="${hauteur - 16}" text-anchor="middle">${ech(c.titre)}</text>`;
+      + `<text class="grad${c.ici ? " t-neutre" : ""}" x="${px(i)}" y="${hauteur - 16}" text-anchor="middle">${ech(c.titre)}</text>`;
   });
   for (let r = 1; r <= profond; r++) {
     svg += `<text class="grad" x="${gauche - 14}" y="${py(r) + 4}" text-anchor="end">${ech(nomRang ? nomRang(r) : r)}</text>`;
@@ -1202,6 +1379,15 @@ export function rangs({ colonnes, series, fmt = String, aria, nomRang }) {
     });
     const fin = s.rangs[s.rangs.length - 1];
     svg += `<text class="rang-nom${vu ? " vedette" : ""}" x="${px(cols.length - 1) + 12}" y="${py(fin.rang) + 4}">${ech(s.nom)}</text>`;
+  }
+
+  /* En dernier, donc au-dessus : la colonne entière se vise. */
+  if (choix) {
+    cols.forEach((c, i) => {
+      const [x, w] = bandeX(i);
+      svg += `<rect class="rang-zone" x="${x}" y="${py(1) - 20}" width="${w}"
+        height="${arr(py(profond) - py(1) + 40)}" data-choix="${ech(c.id ?? c.titre)}" />`;
+    });
   }
 
   return cadre(svg, hauteur, aria) + "</figure>";
