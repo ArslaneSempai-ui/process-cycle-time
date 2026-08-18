@@ -19,7 +19,7 @@ npm run rework       # the two populations hiding inside the average
 npm run sensitivity  # which assumptions decide, and which only scale the answer
 npm run adversarial  # five process reports where the obvious reading is wrong
 npm run baselines    # against the proposals that need no analysis
-npm test             # types, README figures, and 12 tests
+npm test             # types, README figures, and 18 tests
 ```
 
 Everything runs locally. No API key, nothing leaves the machine, and anyone who clones this
