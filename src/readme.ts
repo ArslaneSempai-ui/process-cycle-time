@@ -24,6 +24,7 @@ const o = overall(times);
 const c = conformance(events);
 const coh = cohorts(times);
 const cost = costOfRework(times);
+if (!cost) throw new Error("aucune cohorte sans reprise : le surcoût n'est pas calculable");
 const steps = perStep(events);
 const props = proposals();
 

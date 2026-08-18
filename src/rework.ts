@@ -96,12 +96,27 @@ export type ReworkCost = {
   meanDaysIfNoRework: number;
 };
 
+/**
+ * Ce que la reprise coûte — ou `null` quand la question n'a pas de réponse.
+ *
+ * Tout ce calcul se fait par différence avec les dossiers qui n'ont jamais repassé : c'est
+ * cette cohorte-là qui dit ce qu'un dossier coûte quand tout va bien. Si elle est vide,
+ * il n'y a pas de référence, et le surcoût n'est pas calculable — pas nul, pas estimé :
+ * non calculable.
+ *
+ * Le journal de ce dépôt en contient toujours une, si bien que le cas ne s'était jamais
+ * présenté et qu'un `!` tenait lieu de vérification. Il est apparu au premier journal
+ * étranger, où chaque dossier était repassé au moins une fois, et l'outil s'est arrêté sur
+ * une lecture de propriété d'`undefined`. Un appelant qui reçoit `null` a une chose utile à
+ * dire ; un appelant qui reçoit une exception n'en a aucune.
+ */
 export function costOfRework(
   times: CaseTime[] = perCase(),
   a: Assumptions = ASSUMPTIONS,
-): ReworkCost {
+): ReworkCost | null {
   const c = cohorts(times);
-  const clean = c.find((x) => x.passes === 0)!;
+  const clean = c.find((x) => x.passes === 0);
+  if (!clean || !times.length) return null;
   const affected = times.filter((t) => t.reworkPasses > 0);
   const [low, high] = wilson(affected.length, times.length);
 
@@ -124,10 +139,19 @@ export function costOfRework(
   };
 }
 
-if (isMain(import.meta)) {
+function rapporter(): void {
   const times = perCase(generate());
   const c = cohorts(times);
   const cost = costOfRework(times);
+  /* Sans cohorte propre, il n'y a pas de référence : on le dit et on s'arrête là. */
+  /* Sans cohorte propre, il n'y a pas de référence : on le dit et on s'arrête là.
+   * Un `return`, pas un `process.exit` : ce module est aussi compilé pour le navigateur,
+   * où `process` n'existe pas. */
+  if (!cost) {
+    console.log("\nEvery case came back at least once: there is no clean cohort to compare " +
+      "against,\nso the extra cost of rework is not computable from this log.\n");
+    return;
+  }
   const pc = (x: number) => (x * 100).toFixed(1) + " %";
   const money = (x: number) => "$" + Math.round(x).toLocaleString("en-GB");
 
@@ -159,3 +183,5 @@ if (isMain(import.meta)) {
     `the cost of the change — which is the comparison nobody makes before starting.\n`,
   );
 }
+
+if (isMain(import.meta)) rapporter();

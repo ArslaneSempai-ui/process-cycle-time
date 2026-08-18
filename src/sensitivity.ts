@@ -23,6 +23,10 @@ const times = perCase(generate());
 /** Total annual value of removing all rework, under a given set of assumptions. */
 export function totalValue(a: Assumptions): number {
   const c = costOfRework(times, a);
+  /* Ce module tourne sur le journal du dépôt, qui contient toujours une cohorte propre.
+   * Le zéro n'est donc pas un cas plausible ici — il est écrit pour que le jour où ce
+   * module lira un autre journal, l'absence de référence donne zéro et non une exception. */
+  if (!c) return 0;
   const daysSaved = (c.meanDaysBefore - c.meanDaysIfNoRework) * a.casesPerYear;
   return c.extraCostPerYear + daysSaved * a.costPerDayOfDelay;
 }

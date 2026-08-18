@@ -143,3 +143,29 @@ test("nothing the tool runs on is missing from the inventory", () => {
   assert.match(readme, /no retrieved|cites nothing|nothing is retrieved/i,
     "the README must say why there are no citations, not just have none");
 });
+
+test("sans cohorte propre, le surcoût de reprise n'est pas calculable — et le dit", () => {
+  /*
+   * Trouvé en donnant au modèle un journal étranger où chaque dossier avait été repassé au
+   * moins une fois. `cohorts` ne renvoyait alors aucune cohorte à zéro passe, et un `!`
+   * tenait lieu de vérification : lecture de propriété sur `undefined`, outil arrêté.
+   *
+   * Il n'y a pas de bonne valeur à renvoyer dans ce cas — tout le calcul se fait par
+   * différence avec les dossiers qui n'ont jamais repassé. Zéro serait un mensonge, une
+   * estimation aussi. `null` laisse l'appelant dire la seule chose vraie : on ne sait pas.
+   */
+  const tous = [
+    { caseId: "A", leadMinutes: 900, touchMinutes: 60, waitMinutes: 840, steps: 4, reworkPasses: 1 },
+    { caseId: "B", leadMinutes: 1200, touchMinutes: 90, waitMinutes: 1110, steps: 5, reworkPasses: 2 },
+  ];
+  assert.equal(costOfRework(tous), null);
+
+  /* Un journal vide ne vaut pas mieux qu'un journal sans référence. */
+  assert.equal(costOfRework([]), null);
+
+  /* Et le cas normal continue de répondre. */
+  const avecPropre = [...tous,
+    { caseId: "C", leadMinutes: 300, touchMinutes: 40, waitMinutes: 260, steps: 3, reworkPasses: 0 }];
+  const c = costOfRework(avecPropre);
+  assert.ok(c && c.affectedCases === 2 && c.share > 0);
+});

@@ -33,6 +33,7 @@
 </main>
 
 <script type="module">
+import { barres, empile } from "/graphes.js";
 const $ = (s) => document.querySelector(s);
 const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
@@ -64,15 +65,30 @@ const T = {
     titreCohortes: "Les deux populations dans la moyenne",
     colCohorte: "", colDossiers: "dossiers", colPart: "part", colMoyJours: "moyenne (j)",
     colMedJours: "médiane", colTravaille: "travaillé", colFois: "× un dossier propre",
-    cohortesQuoi: "Ce qui sépare les deux n'est ni la taille du dossier ni le soin de l'analyste : c'est <b>si le dossier est revenu</b>. Avant de chercher à accélérer une étape, il faut demander combien de dossiers l'ont faite deux fois.",
+    cohortesQuoi: "Ce qui sépare les deux n'est ni la taille du dossier ni le soin de l'analyste : c'est <b>si le dossier est revenu</b>.",
 
+    voirChiffres: "Voir tous les chiffres",
+    repere: (m) => `Le trait vertical marque la moyenne annoncée, <b>${m} jours</b>. Aucune des trois barres ne tombe dessus.`,
     titreRoutes: "Les chemins réellement pris",
     routesQuoi: (n, conf, quatre) => `La procédure décrit une route. <b>${conf} des dossiers l'ont suivie exactement.</b> Il y a ${n} routes distinctes, et il en faut ${quatre} pour couvrir quatre cinquièmes des dossiers.`,
     colCas: "dossiers", colRoute: "route", documente: "documenté",
     plusDeRoutes: (n) => `${n} autres routes sous celles-ci.`,
 
     titreEtapes: "Ce qu'un rapport par étape rate",
-    etapesQuoi: "Une moyenne par étape divise les minutes par <b>occurrences</b>, pas par dossiers. Une étape qui se répète coûte plus qu'annoncé, et aucun outil de reporting ne calcule l'autre colonne.",
+    etapesQuoi: "Une moyenne par étape divise les minutes par <b>occurrences</b>, pas par dossiers.",
+    figAttenteTitre: "Un dossier moyen, heure par heure",
+    figAttenteAria: "Une barre unique : le travail effectif occupe un mince segment à gauche, l'attente occupe tout le reste.",
+    figEtapesTitre: "Où le dossier attend, étape par étape",
+    figEtapesAria: "Barres de l'attente médiane avant chaque étape ; le temps réellement travaillé est rappelé sous chaque barre.",
+    figRoutesTitre: "Les routes réellement suivies",
+    figRoutesAria: "Barres de la part de dossiers par route ; la route documentée est en tête, et la traîne des routes restantes pèse plus que toutes les autres réunies.",
+    figDelaiTitre: "Ce que le prix du délai change",
+    figDelaiAria: "Deux barres : la valeur annuelle avec le délai valorisé, et la même sans, un facteur de plusieurs fois.",
+    segTravail: "travaillé", segAttente: "en attente",
+    figAttenteNom: (n) => `moyenne sur ${n} dossiers`,
+    autresRoutes: (n) => `les ${n} autres routes`,
+    avecDelai: "délai valorisé", sansDelai: "délai à zéro",
+    travailleSous: (m) => `${m} min travaillées`,
     colActivite: "activité", colParDossier: "fois / dossier", colRapport: "le rapport dit",
     colReel: "coûte par dossier", colAttenteAvant: "attente médiane avant",
 
@@ -101,15 +117,30 @@ const T = {
     titreCohortes: "The two populations inside the average",
     colCohorte: "", colDossiers: "cases", colPart: "share", colMoyJours: "mean (d)",
     colMedJours: "median", colTravaille: "worked", colFois: "× a clean case",
-    cohortesQuoi: "What separates the two is neither the size of the file nor the diligence of the analyst: it is <b>whether the case came back</b>. Before asking how to make a step faster, ask how many cases had to do it twice.",
+    cohortesQuoi: "What separates the two is neither the size of the file nor the diligence of the analyst: it is <b>whether the case came back</b>.",
 
+    voirChiffres: "Show every figure",
+    repere: (m) => `The vertical mark is the headline mean, <b>${m} days</b>. Not one of the three bars lands on it.`,
     titreRoutes: "The routes actually taken",
     routesQuoi: (n, conf, quatre) => `The procedure describes one route. <b>${conf} of cases followed it exactly.</b> There are ${n} distinct routes, and it takes ${quatre} of them to cover four fifths of the cases.`,
     colCas: "cases", colRoute: "route", documente: "documented",
     plusDeRoutes: (n) => `${n} further routes below these.`,
 
     titreEtapes: "What a step report misses",
-    etapesQuoi: "A step average divides minutes by <b>occurrences</b>, not by cases. A step that repeats costs more than reported, and no reporting tool computes the other column.",
+    etapesQuoi: "A step average divides minutes by <b>occurrences</b>, not by cases.",
+    figAttenteTitre: "One average case, hour by hour",
+    figAttenteAria: "A single bar: hands-on work takes a thin segment on the left, waiting takes all the rest.",
+    figEtapesTitre: "Where the case waits, step by step",
+    figEtapesAria: "Bars of the median wait before each step; the time actually worked is noted under each bar.",
+    figRoutesTitre: "The routes actually followed",
+    figRoutesAria: "Bars of the share of cases per route; the documented route leads, and the tail of remaining routes weighs more than all the others together.",
+    figDelaiTitre: "What pricing the delay changes",
+    figDelaiAria: "Two bars: the annual value with delay priced in, and the same without, a factor of several times.",
+    segTravail: "worked", segAttente: "waiting",
+    figAttenteNom: (n) => `mean over ${n} cases`,
+    autresRoutes: (n) => `the ${n} other routes`,
+    avecDelai: "delay priced", sansDelai: "delay at zero",
+    travailleSous: (m) => `${m} min worked`,
     colActivite: "activity", colParDossier: "times / case", colRapport: "a report says",
     colReel: "costs per case", colAttenteAvant: "median wait before",
 
@@ -125,6 +156,10 @@ const T = {
     provenance: "Every figure on this page is <b>measured</b> from the event log, <b>assumed</b> because nobody here can know it, or <b>chosen</b> by me. None is retrieved from a public source. The README says which is which, one by one.",
   },
 };
+
+/* La journée ouvrée du modèle : 480 minutes, soit huit heures. Le tableau des étapes
+ * divise déjà par 480 pour afficher des jours ; les figures utilisent la même. */
+const JOUR_MIN = 480, JOUR = 8;
 
 let langue = localStorage.getItem("langue") ?? "en";
 const t = () => T[langue];
@@ -155,6 +190,15 @@ function blocTete() {
     ${ligne(L.travail, o.meanTouchHours.toFixed(1) + " " + L.heures)}
     <div class="ligne total"><span class="intitule">${esc(L.attente)}</span>
       <span class="valeur">${pc(o.waitingShare)}</span></div>
+    <div class="titre-fig">${esc(L.figAttenteTitre)}</div>
+    ${empile({
+      items: [{ nom: L.figAttenteNom(nb(o.cases)), parts: [
+        { nom: L.segTravail, valeur: o.meanTouchHours, ton: "accent" },
+        { nom: L.segAttente, valeur: JOUR * o.meanLeadDays - o.meanTouchHours, ton: "neutre" },
+      ] }],
+      fmt: (v) => v.toFixed(1) + " " + L.heures,
+      aria: L.figAttenteAria,
+    })}
   </section>`;
 }
 
@@ -169,17 +213,47 @@ function blocAlerte() {
 function blocCohortes() {
   const L = t();
   $("#titreCohortes").textContent = L.titreCohortes;
+
+  /*
+   * Bars, not a table.
+   *
+   * The finding is that clean cases finish in 2.4 days and twice-returned cases take 21.6 —
+   * a factor of nearly nine, with the headline mean sitting between them describing
+   * neither. In three table rows that has to be read and divided. Drawn, the gap is the
+   * first thing anybody sees, and the marker showing where the average falls makes the
+   * point without a sentence.
+   */
+  const max = Math.max(...etat.cohorts.map((x) => x.meanLeadDays));
+  const moy = etat.overall.meanLeadDays;
+
+  const jauges = etat.cohorts.map((x) => `<div class="jauge${x.passes >= 2 ? " defavorable" : x.passes === 0 ? " gagnant" : ""}">
+    <div class="etiquette">
+      <b>${esc(x.label)} <small>— ${nb(x.cases)} ${esc(L.colDossiers)}, ${pc(x.share)}</small></b>
+      <span class="valeur">${x.meanLeadDays.toFixed(1)} ${esc(L.jours)}</span>
+    </div>
+    <div class="piste">
+      <div class="remplissage" style="width:${((x.meanLeadDays / max) * 100).toFixed(1)}%"></div>
+      <div class="seuil" style="left:${((moy / max) * 100).toFixed(1)}%"></div>
+    </div>
+  </div>`).join("");
+
   const lignes = etat.cohorts.map((x) => `<tr${x.passes === 0 ? ' class="ici"' : ""}>
     <td>${esc(x.label)}</td><td>${nb(x.cases)}</td><td>${pc(x.share)}</td>
     <td><b>${x.meanLeadDays.toFixed(1)}</b></td><td>${x.medianLeadDays.toFixed(1)}</td>
     <td>${x.meanTouchHours.toFixed(1)} ${esc(L.heures)}</td><td>${x.timesLonger.toFixed(1)}×</td></tr>`).join("");
-  $("#cohortes").innerHTML = `<div class="feuillet">
-    <div class="defile"><table><thead><tr>
-      <th>${esc(L.colCohorte)}</th><th>${esc(L.colDossiers)}</th><th>${esc(L.colPart)}</th>
-      <th>${esc(L.colMoyJours)}</th><th>${esc(L.colMedJours)}</th><th>${esc(L.colTravaille)}</th>
-      <th>${esc(L.colFois)}</th></tr></thead><tbody>${lignes}</tbody></table></div>
-    <div class="quoi">${L.cohortesQuoi}</div>
-  </div>`;
+
+  $("#cohortes").innerHTML = `<div class="feuillet"><div class="corps">
+    ${jauges}
+    <div class="renvoi">${L.repere(moy.toFixed(1))}</div>
+    <details>
+      <summary>${esc(L.voirChiffres)}</summary>
+      <div class="defile"><table><thead><tr>
+        <th>${esc(L.colCohorte)}</th><th>${esc(L.colDossiers)}</th><th>${esc(L.colPart)}</th>
+        <th>${esc(L.colMoyJours)}</th><th>${esc(L.colMedJours)}</th><th>${esc(L.colTravaille)}</th>
+        <th>${esc(L.colFois)}</th></tr></thead><tbody>${lignes}</tbody></table></div>
+    </details>
+    <div class="suite">${L.cohortesQuoi}</div>
+  </div></div>`;
 }
 
 function blocRoutes() {
@@ -188,11 +262,29 @@ function blocRoutes() {
   const lignes = etat.variants.map((v) => `<tr${v.documented ? ' class="ici"' : ""}>
     <td>${nb(v.cases)}</td><td>${pc(v.share)}</td>
     <td><code>${esc(v.short)}</code>${v.documented ? " ← " + esc(L.documente) : ""}</td></tr>`).join("");
+  /* La traîne est le résultat : huit routes nommées, et soixante-six qu'on ne montre pas
+   * parce qu'elles n'ont qu'un dossier chacune — mais qui, ensemble, pèsent. */
+  const traine = Math.max(0, 1 - etat.variants.reduce((t, v) => t + v.share, 0));
+  const figRoutes = barres({
+    items: [
+      ...etat.variants.map((v) => ({
+        nom: v.short, valeur: v.share, ici: v.documented,
+        ton: v.documented ? "accent" : undefined,
+        note: nb(v.cases) + " " + L.colCas.toLowerCase(),
+      })),
+      ...(etat.moreVariants > 0 && traine > 0
+        ? [{ nom: L.autresRoutes(etat.moreVariants), valeur: traine, ton: "attention" }] : []),
+    ],
+    fmt: pc, max: 1, aria: L.figRoutesAria,
+  });
+
   $("#routes").innerHTML = `<div class="feuillet">
     <div class="quoi">${L.routesQuoi(c.distinctPaths, pc(c.share), c.pathsForFourFifths)}</div>
+    <div class="titre-fig">${esc(L.figRoutesTitre)}</div>${figRoutes}
+    <details><summary>${esc(L.voirChiffres)}</summary>
     <div class="defile"><table><thead><tr>
       <th>${esc(L.colCas)}</th><th>${esc(L.colPart)}</th><th>${esc(L.colRoute)}</th>
-    </tr></thead><tbody>${lignes}</tbody></table></div>
+    </tr></thead><tbody>${lignes}</tbody></table></div></details>
     ${etat.moreVariants > 0 ? `<div class="renvoi">${esc(L.plusDeRoutes(etat.moreVariants))}</div>` : ""}
   </div>`;
 }
@@ -204,12 +296,25 @@ function blocEtapes() {
     <td>${esc(s.activity)}</td><td>${s.perCase.toFixed(2)}</td>
     <td>${s.meanPerOccurrence.toFixed(0)} min</td><td><b>${s.meanPerCase.toFixed(0)} min</b></td>
     <td>${(s.medianWaitBefore / 480).toFixed(1)} ${esc(L.jours[0])}</td></tr>`).join("");
+  /* Une barre = une attente médiane ; le temps travaillé reste en note. Empiler les deux
+   * donnerait une somme d'une médiane et d'une moyenne, c'est-à-dire rien. */
+  const figEtapes = barres({
+    items: [...etat.steps].sort((x, y) => y.medianWaitBefore - x.medianWaitBefore).map((x) => ({
+      nom: x.activity, valeur: x.medianWaitBefore / JOUR_MIN, ton: "attention",
+      note: L.travailleSous(x.meanPerCase.toFixed(0)),
+    })),
+    fmt: (v) => v.toFixed(1) + " " + L.jours,
+    aria: L.figEtapesAria,
+  });
+
   $("#etapes").innerHTML = `<div class="feuillet">
     <div class="quoi">${L.etapesQuoi}</div>
+    <div class="titre-fig">${esc(L.figEtapesTitre)}</div>${figEtapes}
+    <details><summary>${esc(L.voirChiffres)}</summary>
     <div class="defile"><table><thead><tr>
       <th>${esc(L.colActivite)}</th><th>${esc(L.colParDossier)}</th><th>${esc(L.colRapport)}</th>
       <th>${esc(L.colReel)}</th><th>${esc(L.colAttenteAvant)}</th>
-    </tr></thead><tbody>${lignes}</tbody></table></div>
+    </tr></thead><tbody>${lignes}</tbody></table></div></details>
   </div>`;
 }
 
@@ -228,8 +333,16 @@ function blocHypotheses() {
     <div class="grille">${champs}</div>
     <div class="ligne total"><span class="intitule">${esc(L.valeur)}</span>
       <span class="valeur">${dollars(v.total)}</span></div>
+    <div class="titre-fig">${esc(L.figDelaiTitre)}</div>
+    ${barres({
+      items: [
+        { nom: L.avecDelai, valeur: v.total, ton: "accent", ici: true },
+        { nom: L.sansDelai, valeur: v.atZero, ton: "attention" },
+      ],
+      fmt: dollars, aria: L.figDelaiAria,
+    })}
     <div class="renvoi ${v.factor > 2 ? "attention" : ""}">${L.zero(dollars(v.atZero), dollars(v.total), v.factor.toFixed(1))}</div>
-    <button class="b" id="defaut" type="button">${esc(L.defaut)}</button>
+    <button class="b remise" id="defaut" type="button">${esc(L.defaut)}</button>
   </div>`;
 
   for (const cle of Object.keys(etat.bounds)) {

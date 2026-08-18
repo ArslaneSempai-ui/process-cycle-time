@@ -25,6 +25,7 @@ export function proposals(): Proposal[] {
   const o = overall(times);
   const steps = perStep();
   const c = costOfRework(times);
+  if (!c) return [];
 
   const slowest = steps.reduce((hi, x) => (x.meanPerOccurrence > hi.meanPerOccurrence ? x : hi), steps[0]!);
   const clean = cohorts(times).find((x) => x.passes === 0)!;
