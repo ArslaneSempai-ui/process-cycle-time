@@ -113,6 +113,7 @@ const T = {
     colReel: "costs per case", colAttenteAvant: "median wait before",
 
     titrePromesse: "The promise you can actually keep",
+    figPromesseNom: "Promised lead time, in working days",
     figPromesseTitre: "Every case, by how many times it came back",
     figPromesseAria: "Three strata of cases on one axis of lead time — never returned, returned once, returned twice or more. A limit line the reader drags cuts each stratum, and the share of cases finishing inside the promise is written at the right of each.",
     promesseEtiq: (j) => `promise: ${j} days`,
@@ -223,7 +224,7 @@ function blocPromesse() {
     blocPromesse();
     clearTimeout(syncPromesse);
     syncPromesse = setTimeout(() => envoyer("/api/promesse", { jours: etat.promesse.jours }), 220);
-  }, { x: p.jours });
+  }, { x: p.jours, nom: L.figPromesseNom });
 }
 
 function blocCohortes() {
