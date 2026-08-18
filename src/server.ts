@@ -7,12 +7,12 @@
 
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { readFileSync } from "node:fs";
-import { generate } from "./events.ts";
+import { generate, days } from "./events.ts";
 import { variants, conformance, short } from "./paths.ts";
 import { perCase, perStep, overall } from "./time.ts";
 import { cohorts, costOfRework } from "./rework.ts";
 import { totalValue } from "./sensitivity.ts";
-import { ASSUMPTIONS, BOUNDS } from "./assumptions.ts";
+import { ASSUMPTIONS, BOUNDS, PROMESSE } from "./assumptions.ts";
 import { isMain } from "./cli.ts";
 import type { Assumptions } from "./assumptions.ts";
 
@@ -43,6 +43,17 @@ function corps(req: IncomingMessage): Promise<Record<string, unknown>> {
   });
 }
 
+/*
+ * La promesse, et les strates qu'elle sépare.
+ *
+ * L'outil dit que la moyenne ne décrit aucun cas. Le montrer demande de laisser le lecteur
+ * poser lui-même la limite qui l'intéresse — un délai promis — et de lire, cohorte par
+ * cohorte, ce que cette promesse tient réellement. Les délais partent donc au complet : ce
+ * sont des cas, pas une densité lissée, et c'est le nombre de cas tenus qui répond.
+ */
+let promesseJours: number = PROMESSE.defaut;
+
+
 export function etat() {
   const total = totalValue(assumptions);
   const atZero = totalValue({ ...assumptions, costPerDayOfDelay: 0 });
@@ -59,6 +70,14 @@ export function etat() {
     value: { total, atZero, factor: atZero === 0 ? Infinity : total / atZero },
     assumptions,
     bounds: BOUNDS,
+    promesse: { jours: promesseJours, bornes: PROMESSE },
+    /* Un tableau de délais par cohorte : la figure sépare, elle ne recalcule pas. */
+    strates: cohorts(times).map((c) => ({
+      nom: c.label,
+      passes: c.passes,
+      jours: times.filter((t) => Math.min(t.reworkPasses, 2) === c.passes)
+        .map((t) => days(t.leadMinutes)),
+    })),
   };
 }
 
@@ -87,6 +106,13 @@ const serveur = createServer(async (req, res) => {
     }
 
     if (url.pathname === "/api/etat") return json(res, etat());
+
+    if (url.pathname === "/api/promesse" && req.method === "POST") {
+      const recu = await corps(req);
+      const v = Number(recu.jours);
+      if (Number.isFinite(v)) promesseJours = Math.min(PROMESSE.haut, Math.max(PROMESSE.bas, v));
+      return json(res, etat());
+    }
 
     if (url.pathname === "/api/hypotheses" && req.method === "POST") {
       const recu = await corps(req);

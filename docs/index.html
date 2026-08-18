@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Onze jours, et personne n'y a touché pendant neuf</title>
+<title>Eleven days, and nobody worked on it for nine</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23fbfaf7'/%3E%3Crect x='2' y='4' width='12' height='1' fill='%23111'/%3E%3Crect x='2' y='7' width='12' height='1' fill='%23111'/%3E%3Crect x='2' y='11' width='12' height='2' fill='%23111'/%3E%3C/svg%3E" />
 <link rel="stylesheet" href="registre.css" />
 </head>
@@ -11,17 +11,19 @@
 <main>
   <div class="haut">
     <div><h1 id="h1"></h1><p class="lede" id="lede"></p></div>
-    <div class="lang"><button id="fr" type="button">FR</button><button id="en" type="button">EN</button></div>
   </div>
 <p class="renvoi" style="margin-bottom:1.5rem">
 This runs entirely in your browser — no server, nothing leaves your machine. The event log is
-<b>synthetic and seeded</b>. <b>Set the cost of a day of delay to zero</b>, at the bottom —
-which is what happens when nobody can name it — and watch the value of the same work fall by
-a factor of nine. <a href="https://github.com/ArslaneSempai-ui/process-cycle-time">Source and method</a>.
+<b>synthetic and seeded</b>. <b>Drag the promise line</b> across the three populations and read who your
+service level actually serves — then set the cost of a day of delay to zero, at the bottom,
+and watch the value of the same work fall by a factor of nine. <a href="https://github.com/ArslaneSempai-ui/process-cycle-time">Source and method</a>.
 </p>
 
   <div class="chiffres" id="tete"></div>
   <div id="alerte"></div>
+
+  <h2 id="titrePromesse"></h2>
+  <div id="promesse"></div>
 
   <h2 id="titreCohortes"></h2>
   <div id="cohortes"></div>
@@ -39,18 +41,19 @@ a factor of nine. <a href="https://github.com/ArslaneSempai-ui/process-cycle-tim
 </main>
 
 <script type="module">
-import { generate } from "./js/events.js";
+import { generate, days } from "./js/events.js";
 import { variants, conformance, short } from "./js/paths.js";
 import { perCase, perStep, overall } from "./js/time.js";
 import { cohorts, costOfRework } from "./js/rework.js";
 import { totalValue } from "./js/sensitivity.js";
-import { ASSUMPTIONS, BOUNDS } from "./js/assumptions.js";
+import { ASSUMPTIONS, BOUNDS, PROMESSE } from "./js/assumptions.js";
 
 const events = generate();
 const times = perCase(events);
 const allVariants = variants(events);
 const TOP = 8;
 let assumptions = { ...ASSUMPTIONS };
+let promesseJours = PROMESSE.defaut;
 
 const etat = () => {
   const total = totalValue(assumptions);
@@ -65,6 +68,12 @@ const etat = () => {
     rework: costOfRework(times, assumptions),
     value: { total, atZero, factor: atZero === 0 ? Infinity : total / atZero },
     assumptions, bounds: BOUNDS,
+    promesse: { jours: promesseJours, bornes: PROMESSE },
+    strates: cohorts(times).map((c) => ({
+      nom: c.label,
+      passes: c.passes,
+      jours: times.filter((t) => Math.min(t.reworkPasses, 2) === c.passes).map((t) => days(t.leadMinutes)),
+    })),
   };
 };
 
@@ -80,11 +89,16 @@ window.LOCAL = async (chemin, corps) => {
     }
     return etat();
   }
+  if (chemin === "/api/promesse") {
+    const v = Number(corps.jours);
+    if (Number.isFinite(v)) promesseJours = Math.min(PROMESSE.haut, Math.max(PROMESSE.bas, v));
+    return etat();
+  }
   return {};
 };
 </script>
 <script type="module">
-import { barres, empile } from "./graphes.js";
+import { barres, empile, partEcrite, saisir, strates } from "./graphes.js";
 const $ = (s) => document.querySelector(s);
 const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
 
@@ -102,62 +116,6 @@ const api = async (chemin, corps) =>
 
 /* The engine builds no sentences: it returns structures and the screen phrases them. */
 const T = {
-  fr: {
-    h1: "Onze jours, et personne n'y a touché pendant neuf",
-    lede: "Un rapport de processus donne une moyenne et un temps par étape. Les deux sont vrais et aucun ne dit quoi faire.",
-
-    releve: "Le processus, mesuré",
-    moyenne: "moyenne de bout en bout", mediane: "médiane", p90: "90e centile",
-    travail: "temps réellement travaillé", attente: "part où personne n'y touche",
-    jours: "jours", heures: "h",
-
-    alerte: (moy, propre, sale) => `<b>La moyenne décrit aucun dossier.</b> Elle est de ${moy} jours. Les dossiers qui ne sont jamais revenus finissent en ${propre} ; ceux revenus deux fois prennent ${sale}. Une cible posée sur la moyenne est atteinte par tous ceux qui n'ont jamais eu de problème.`,
-
-    titreCohortes: "Les deux populations dans la moyenne",
-    colCohorte: "", colDossiers: "dossiers", colPart: "part", colMoyJours: "moyenne (j)",
-    colMedJours: "médiane", colTravaille: "travaillé", colFois: "× un dossier propre",
-    cohortesQuoi: "Ce qui sépare les deux n'est ni la taille du dossier ni le soin de l'analyste : c'est <b>si le dossier est revenu</b>.",
-
-    voirChiffres: "Voir tous les chiffres",
-    repere: (m) => `Le trait vertical marque la moyenne annoncée, <b>${m} jours</b>. Aucune des trois barres ne tombe dessus.`,
-    titreRoutes: "Les chemins réellement pris",
-    routesQuoi: (n, conf, quatre) => `La procédure décrit une route. <b>${conf} des dossiers l'ont suivie exactement.</b> Il y a ${n} routes distinctes, et il en faut ${quatre} pour couvrir quatre cinquièmes des dossiers.`,
-    colCas: "dossiers", colRoute: "route", documente: "documenté",
-    plusDeRoutes: (n) => `${n} autres routes sous celles-ci.`,
-
-    titreEtapes: "Ce qu'un rapport par étape rate",
-    etapesQuoi: "Une moyenne par étape divise les minutes par <b>occurrences</b>, pas par dossiers.",
-    figAttenteTitre: "Un dossier moyen, heure par heure",
-    figAttenteAria: "Une barre unique : le travail effectif occupe un mince segment à gauche, l'attente occupe tout le reste.",
-    figEtapesTitre: "Où le dossier attend, étape par étape",
-    figEtapesAria: "Barres de l'attente médiane avant chaque étape ; le temps réellement travaillé est rappelé sous chaque barre.",
-    figCarteTitre: "Le chemin réellement pris",
-    figCarteAria: "Carte du processus : la route documentée traverse la figure en ligne droite, et les écarts s'en détachent par-dessous — dont deux boucles, l'une qui renvoie aux pièces après une demande de complément, l'autre qui repasse par l'évaluation du risque après escalade.",
-    figCarteLegende: (p) => `Les huit routes les plus fréquentes, soit ${p} des dossiers. Épaisseur du trait : nombre de dossiers.`,
-    figRoutesTitre: "Les routes réellement suivies",
-    figRoutesAria: "Barres de la part de dossiers par route ; la route documentée est en tête, et la traîne des routes restantes pèse plus que toutes les autres réunies.",
-    figDelaiTitre: "Ce que le prix du délai change",
-    figDelaiAria: "Deux barres : la valeur annuelle avec le délai valorisé, et la même sans, un facteur de plusieurs fois.",
-    segTravail: "travaillé", segAttente: "en attente",
-    figAttenteNom: (n) => `moyenne sur ${n} dossiers`,
-    autresRoutes: (n) => `les ${n} autres routes`,
-    avecDelai: "délai valorisé", sansDelai: "délai à zéro",
-    travailleSous: (m) => `${m} min travaillées`,
-    colActivite: "activité", colParDossier: "fois / dossier", colRapport: "le rapport dit",
-    colReel: "coûte par dossier", colAttenteAvant: "attente médiane avant",
-
-    titreHyp: "Les hypothèses",
-    hypQuoi: "Le journal d'événements est mesuré. Ce qui le transforme en décision ne l'est pas — et le chiffre le moins connaissable est celui qui décide.",
-    loadedHourlyCost: "Coût chargé d'une heure d'analyste ($)",
-    casesPerYear: "Dossiers par an",
-    costPerDayOfDelay: "Coût d'un jour de retard, par dossier ($)",
-    valeur: "Retirer toute la reprise vaudrait, par an",
-    zero: (v, base, f) => `À zéro — ce qui arrive quand personne ne sait nommer ce chiffre — le même travail vaut ${v} au lieu de ${base}. <b>Un facteur ${f}</b>, et la différence entre un projet financé et un projet qui ne l'est pas.`,
-    defaut: "Revenir aux hypothèses de départ",
-
-    provenance: "Chaque chiffre de cette page est <b>mesuré</b> à partir du journal d'événements, <b>supposé</b> parce que personne ici ne peut le connaître, ou <b>choisi</b> par moi. Aucun n'est retrouvé dans une source publique. Le README dit lequel est lequel, un par un.",
-  },
-  en: {
     h1: "Eleven days, and nobody worked on it for nine",
     lede: "A process report gives you an average and a time per step. Both are true and neither says what to do.",
 
@@ -201,6 +159,12 @@ const T = {
     colActivite: "activity", colParDossier: "times / case", colRapport: "a report says",
     colReel: "costs per case", colAttenteAvant: "median wait before",
 
+    titrePromesse: "The promise you can actually keep",
+    figPromesseTitre: "Every case, by how many times it came back",
+    figPromesseAria: "Three strata of cases on one axis of lead time — never returned, returned once, returned twice or more. A limit line the reader drags cuts each stratum, and the share of cases finishing inside the promise is written at the right of each.",
+    promesseEtiq: (j) => `promise: ${j} days`,
+    promesseQuoi: (propre, pire, tout) => `Drag the line. At this promise it is kept for <b>${propre}</b> of the cases that never came back and <b>${pire}</b> of those that came back twice — ${tout} overall. A service level set on the average is met by the population that never had a problem in the first place.`,
+
     titreHyp: "The assumptions",
     hypQuoi: "The event log is measured. What turns it into a decision is not — and the least knowable figure is the one that decides.",
     loadedHourlyCost: "Loaded cost of an analyst hour ($)",
@@ -211,15 +175,13 @@ const T = {
     defaut: "Reset the assumptions",
 
     provenance: "Every figure on this page is <b>measured</b> from the event log, <b>assumed</b> because nobody here can know it, or <b>chosen</b> by me. None is retrieved from a public source. The README says which is which, one by one.",
-  },
 };
 
 /* La journée ouvrée du modèle : 480 minutes, soit huit heures. Le tableau des étapes
  * divise déjà par 480 pour afficher des jours ; les figures utilisent la même. */
 const JOUR_MIN = 480, JOUR = 8;
 
-let langue = localStorage.getItem("langue") ?? "en";
-const t = () => T[langue];
+const t = () => T;
 let etat = null, occupe = false;
 
 const nb = (n) => Math.round(n).toLocaleString("en-GB");
@@ -265,6 +227,50 @@ function blocAlerte() {
   $("#alerte").innerHTML = `<div class="renvoi attention">${L.alerte(
     o.meanLeadDays.toFixed(1), propre.meanLeadDays.toFixed(1) + " " + L.jours,
     sale.meanLeadDays.toFixed(1))}</div>`;
+}
+
+/**
+ * LA PROMESSE.
+ *
+ * Le reste de l'écran démontre que la moyenne ne décrit personne. Le démontrer ne sert à
+ * rien si le lecteur ne peut pas s'en servir : ce qu'il a, lui, c'est un délai promis. Il
+ * le tire le long de l'axe et lit, strate par strate, à qui sa promesse s'adresse
+ * réellement — les dossiers jamais revenus la tiennent tous, ceux qui sont revenus ne la
+ * tiennent presque jamais. Aucune moyenne n'apparaît dans la figure ; c'est le propos.
+ *
+ * Le bloc se redessine seul pendant le geste. Rien d'autre sur la page ne dépend de la
+ * promesse, et refaire un aller-retour réseau par mouvement du doigt saccaderait ; le
+ * serveur est prévenu à la fin du geste, pour que la valeur survive à un rechargement.
+ */
+let syncPromesse = 0;
+function blocPromesse() {
+  const L = t(), p = etat.promesse;
+  $("#titrePromesse").textContent = L.titrePromesse;
+
+  const liste = etat.strates.map((x) => ({ nom: x.nom, valeurs: x.jours }));
+  const dedans = (x) => x.valeurs.filter((v) => v <= p.jours).length;
+  const tenus = liste.reduce((n, x) => n + dedans(x), 0);
+  const total = liste.reduce((n, x) => n + x.valeurs.length, 0);
+
+  $("#promesse").innerHTML = `<div class="feuillet">
+    <div class="titre-fig">${esc(L.figPromesseTitre)}</div>
+    ${strates({
+      strates: liste,
+      seuil: { v: p.jours, etiquette: L.promesseEtiq(p.jours.toFixed(1)) },
+      bas: p.bornes.bas, haut: p.bornes.haut,
+      fmtX: (v) => v.toFixed(0) + (Math.round(v) === 1 ? " day" : " " + L.jours),
+      compte: (dedans, n) => `${partEcrite(dedans, n)} — ${nb(dedans)}/${nb(n)}`,
+      aria: L.figPromesseAria,
+    })}
+    <div class="renvoi">${L.promesseQuoi(...[liste[0], liste[liste.length - 1]].map((x) => partEcrite(dedans(x), x.valeurs.length)), partEcrite(tenus, total))}</div>
+  </div>`;
+
+  saisir($("#promesse"), ({ x }) => {
+    etat.promesse.jours = Math.min(p.bornes.haut, Math.max(p.bornes.bas, x));
+    blocPromesse();
+    clearTimeout(syncPromesse);
+    syncPromesse = setTimeout(() => envoyer("/api/promesse", { jours: etat.promesse.jours }), 220);
+  }, { x: p.jours });
 }
 
 function blocCohortes() {
@@ -509,13 +515,10 @@ function blocHypotheses() {
 
 function dessiner() {
   const L = t();
-  document.documentElement.lang = langue;
   $("#h1").textContent = L.h1;
   $("#lede").textContent = L.lede;
   $("#provenanceLegende").innerHTML = L.provenance;
-  $("#fr").className = langue === "fr" ? "on" : "";
-  $("#en").className = langue === "en" ? "on" : "";
-  blocTete(); blocAlerte(); blocCohortes(); blocRoutes(); blocEtapes(); blocHypotheses();
+  blocTete(); blocAlerte(); blocPromesse(); blocCohortes(); blocRoutes(); blocEtapes(); blocHypotheses();
 }
 
 async function envoyer(chemin, corps) {
@@ -523,10 +526,6 @@ async function envoyer(chemin, corps) {
   occupe = true;
   try { etat = await api(chemin, corps ?? {}); dessiner(); }
   finally { occupe = false; }
-}
-
-for (const l of ["fr", "en"]) {
-  $(`#${l}`).onclick = () => { langue = l; localStorage.setItem("langue", l); dessiner(); };
 }
 
 etat = await api("/api/etat");

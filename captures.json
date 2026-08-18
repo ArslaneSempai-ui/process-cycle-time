@@ -1,1 +1,44 @@
-{ "images": [ { "sortie": "images/screen.png", "type": "png", "taille": [1100, 1900], "echelle": 2, "hauteurUtile": 860 } ] }
+{
+ "images": [
+  {
+   "sortie": "images/screen.png",
+   "type": "png",
+   "taille": [
+    1100,
+    1900
+   ],
+   "echelle": 2,
+   "hauteurUtile": 860
+  },
+  {
+   "sortie": "images/promesse.gif",
+   "type": "gif",
+   "taille": [
+    980,
+    495
+   ],
+   "echelle": 2,
+   "fenetre": [
+    1100,
+    1500
+   ],
+   "depart": 800,
+   "hauteurUtile": 545,
+   "duree": 1100,
+   "scenes": [
+    [
+     "#promesse .carte-prise~0.04"
+    ],
+    [
+     "#promesse .carte-prise~0.11"
+    ],
+    [
+     "#promesse .carte-prise~0.20"
+    ],
+    [
+     "#promesse .carte-prise~0.42"
+    ]
+   ]
+  }
+ ]
+}

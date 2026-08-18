@@ -37,3 +37,13 @@ export const BOUNDS: Record<keyof Assumptions, [number, number]> = {
   casesPerYear: [500, 500_000],
   costPerDayOfDelay: [0, 1_000],
 };
+
+/*
+ * La promesse : le délai que l'équipe annonce à ses clients.
+ *
+ * Ce n'est pas une hypothèse du modèle — rien ne s'en déduit. C'est la question que le
+ * lecteur apporte, et la seule chose de cette page qu'il connaisse mieux que moi. Les
+ * bornes viennent des données : le dossier le plus rapide sort en 0,96 jour ouvré, le plus
+ * lent en 52,7 ; au-delà de quarante la ligne ne sépare plus rien.
+ */
+export const PROMESSE = { defaut: 5, bas: 1, haut: 40 } as const;

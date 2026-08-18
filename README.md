@@ -108,6 +108,24 @@ Removing all of it takes the process from 6.4 days to 2.4, and returns $253,041 
 That is an upper bound and is meant as one: some rework is a customer sending the wrong file, and no process change prevents that. What the figure is for is comparing against the cost of the change — which is the comparison nobody makes before starting.
 <!-- /figures:reworkNote -->
 
+## The promise you can actually keep
+
+<!-- figures:promise -->
+| Promised lead time | 3 working days | 5 working days | 8 working days |
+|---|---|---|---|
+| no rework | 84 % — 659/781 | 99 % — 780/781 | 100 % — 781/781 |
+| came back once | 0 % — 0/293 | 4 % — 13/293 | 32 % — 94/293 |
+| came back twice or more | 0 % — 0/126 | 0 % — 0/126 | 1 % — 1/126 |
+
+Read the middle column. A five-day service level is met by **99 %** of the cases that never came back, **4 %** of those that came back once, and **0 %** of those that came back twice. It is not a service level on the process — it is a service level on the cases that never had a problem. Reported as a single number it reads **66 % attainment**, which hides exactly the population the promise was made to.
+<!-- /figures:promise -->
+
+![Dragging the promised lead time across the three populations](images/promesse.gif)
+
+The line is the control: drag it and the three populations recount underneath. It is the
+one number on this page a reader already knows better than the model does — their own
+service level.
+
 ---
 
 ## Which assumptions decide

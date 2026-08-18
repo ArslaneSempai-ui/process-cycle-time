@@ -18,18 +18,19 @@ import { isMain } from "./cli.ts";
 const root = new URL("..", import.meta.url).pathname;
 
 const SHIM = `<script type="module">
-import { generate } from "./js/events.js";
+import { generate, days } from "./js/events.js";
 import { variants, conformance, short } from "./js/paths.js";
 import { perCase, perStep, overall } from "./js/time.js";
 import { cohorts, costOfRework } from "./js/rework.js";
 import { totalValue } from "./js/sensitivity.js";
-import { ASSUMPTIONS, BOUNDS } from "./js/assumptions.js";
+import { ASSUMPTIONS, BOUNDS, PROMESSE } from "./js/assumptions.js";
 
 const events = generate();
 const times = perCase(events);
 const allVariants = variants(events);
 const TOP = 8;
 let assumptions = { ...ASSUMPTIONS };
+let promesseJours = PROMESSE.defaut;
 
 const etat = () => {
   const total = totalValue(assumptions);
@@ -44,6 +45,12 @@ const etat = () => {
     rework: costOfRework(times, assumptions),
     value: { total, atZero, factor: atZero === 0 ? Infinity : total / atZero },
     assumptions, bounds: BOUNDS,
+    promesse: { jours: promesseJours, bornes: PROMESSE },
+    strates: cohorts(times).map((c) => ({
+      nom: c.label,
+      passes: c.passes,
+      jours: times.filter((t) => Math.min(t.reworkPasses, 2) === c.passes).map((t) => days(t.leadMinutes)),
+    })),
   };
 };
 
@@ -59,15 +66,20 @@ window.LOCAL = async (chemin, corps) => {
     }
     return etat();
   }
+  if (chemin === "/api/promesse") {
+    const v = Number(corps.jours);
+    if (Number.isFinite(v)) promesseJours = Math.min(PROMESSE.haut, Math.max(PROMESSE.bas, v));
+    return etat();
+  }
   return {};
 };
 ` + "</" + "script>\n";
 
 const BANNER = `<p class="renvoi" style="margin-bottom:1.5rem">
 This runs entirely in your browser — no server, nothing leaves your machine. The event log is
-<b>synthetic and seeded</b>. <b>Set the cost of a day of delay to zero</b>, at the bottom —
-which is what happens when nobody can name it — and watch the value of the same work fall by
-a factor of nine. <a href="https://github.com/ArslaneSempai-ui/process-cycle-time">Source and method</a>.
+<b>synthetic and seeded</b>. <b>Drag the promise line</b> across the three populations and read who your
+service level actually serves — then set the cost of a day of delay to zero, at the bottom,
+and watch the value of the same work fall by a factor of nine. <a href="https://github.com/ArslaneSempai-ui/process-cycle-time">Source and method</a>.
 </p>`;
 
 export function build(): void {

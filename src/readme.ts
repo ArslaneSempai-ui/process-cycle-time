@@ -17,6 +17,7 @@ import { INVENTORY } from "./inventory.ts";
 import { markdown } from "./provenance.ts";
 import { ASSUMPTIONS } from "./assumptions.ts";
 import { run as emit, table } from "./figures.ts";
+import { partEcrite } from "./graphes.js";
 
 const events = generate();
 const times = perCase(events);
@@ -72,6 +73,36 @@ const timeTable = table(
     days(s.medianWaitBefore).toFixed(1) + " d",
   ]),
 );
+
+/*
+ * LA PROMESSE.
+ *
+ * Le reste du dépôt dit que la moyenne recouvre trois populations. La conséquence, elle,
+ * n'était nulle part : un délai promis ne s'adresse pas à la moyenne, il s'adresse à des
+ * dossiers, et ceux-ci ne sont pas les mêmes selon le seuil. Trois seuils suffisent à le
+ * montrer — c'est l'écran qui laisse le lecteur poser le sien.
+ */
+const PROMISES = [3, 5, 8];
+const promise = (() => {
+  const lignes = coh.map((c) => {
+    const v = times.filter((x) => Math.min(x.reworkPasses, 2) === c.passes).map((x) => days(x.leadMinutes));
+    return [c.label, ...PROMISES.map((s) => {
+      const dedans = v.filter((x) => x <= s).length;
+      return `${partEcrite(dedans, v.length)} — ${dedans}/${v.length}`;
+    })];
+  });
+  const cinq = coh.map((c) => {
+    const v = times.filter((x) => Math.min(x.reworkPasses, 2) === c.passes).map((x) => days(x.leadMinutes));
+    return partEcrite(v.filter((x) => x <= 5).length, v.length);
+  });
+  return table(["Promised lead time", ...PROMISES.map((s) => `${s} working days`)], lignes) +
+    `\n\nRead the middle column. A five-day service level is met by **${cinq[0]}** of the cases that ` +
+    `never came back, **${cinq[1]}** of those that came back once, and **${cinq[2]}** of those that came ` +
+    `back twice. It is not a service level on the process — it is a service level on the cases that ` +
+    `never had a problem. Reported as a single number it reads ` +
+    `**${partEcrite(times.filter((x) => days(x.leadMinutes) <= 5).length, times.length)} attainment**, ` +
+    `which hides exactly the population the promise was made to.`;
+})();
 
 const sc = slowestAgainstCostliest(steps);
 const timeNote =
@@ -152,4 +183,4 @@ const baselines = (() => {
 const provenance = markdown(INVENTORY, table);
 
 emit(new URL("../README.md", import.meta.url).pathname,
-  { finding, conformTable, timeTable, timeNote, cohortTable, reworkNote, sensitivity, traps, baselines, provenance });
+  { finding, conformTable, timeTable, timeNote, cohortTable, reworkNote, promise, sensitivity, traps, baselines, provenance });
