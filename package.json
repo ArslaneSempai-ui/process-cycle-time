@@ -15,7 +15,8 @@
     "figures": "node src/readme.ts",
     "pages": "tsc -p tsconfig.web.json && node src/pages.ts",
     "typecheck": "tsc --noEmit",
-    "test": "tsc --noEmit && node src/readme.ts --check && node --test src/*.test.ts"
+    "test": "tsc --noEmit && node src/readme.ts --check && node --test src/*.test.ts",
+    "captures": "node src/capturer.mjs ."
   },
   "engines": {
     "node": ">=24"
