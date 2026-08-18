@@ -278,7 +278,7 @@ would look like rigour while being the opposite.
 
 ## What this does not let you conclude
 
-**Not "your process is <!--p:cycle.partAttente|pc0-->95 %<!--/p--> waiting."** This one is, because it was built to be — the
+**Not "your process is <!--p:cycle.partAttente~pc0-->95 %<!--/p--> waiting."** This one is, because it was built to be — the
 mechanism is what matters and the rate is mine. What travels is that the split is worth
 measuring before scoping anything, and that almost nobody has.
 
