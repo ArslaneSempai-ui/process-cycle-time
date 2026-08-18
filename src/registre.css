@@ -684,3 +684,16 @@ a:hover { color: var(--encre); }
 }
 .bascule label { font-size: 14.5px; color: var(--encre-pale); cursor: pointer; max-width: 68ch; }
 .bascule input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* La carte des chemins : une épine, des écarts, deux boucles. */
+.graphe .arc-epine { stroke: var(--accent); color: var(--accent); }
+.graphe .arc-ecart { stroke: var(--filet-gras); color: var(--filet-gras); }
+.graphe .arc-retour { stroke: var(--defavorable); color: var(--defavorable); }
+.graphe .noeud rect { fill: var(--papier); stroke: var(--filet-gras); }
+.graphe .noeud text { font: 600 12px/1 var(--police); fill: var(--encre-pale); }
+.graphe .noeud.epine rect { fill: var(--accent-fond); stroke: var(--accent-bord); }
+.graphe .noeud.epine text { fill: var(--accent-sombre); }
+.graphe .noeud.fin rect { fill: var(--accent); stroke: var(--accent); }
+.graphe .noeud.fin text { fill: var(--papier); }
+.legende-carte { font: 500 11px/1.5 var(--fixe); letter-spacing: .06em; text-transform: uppercase;
+  color: var(--encre-tres-pale); margin: 10px 0 0; }

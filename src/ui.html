@@ -80,6 +80,9 @@ const T = {
     figAttenteAria: "Une barre unique : le travail effectif occupe un mince segment à gauche, l'attente occupe tout le reste.",
     figEtapesTitre: "Où le dossier attend, étape par étape",
     figEtapesAria: "Barres de l'attente médiane avant chaque étape ; le temps réellement travaillé est rappelé sous chaque barre.",
+    figCarteTitre: "Le chemin réellement pris",
+    figCarteAria: "Carte du processus : la route documentée traverse la figure en ligne droite, et les écarts s'en détachent par-dessous — dont deux boucles, l'une qui renvoie aux pièces après une demande de complément, l'autre qui repasse par l'évaluation du risque après escalade.",
+    figCarteLegende: (p) => `Les huit routes les plus fréquentes, soit ${p} des dossiers. Épaisseur du trait : nombre de dossiers.`,
     figRoutesTitre: "Les routes réellement suivies",
     figRoutesAria: "Barres de la part de dossiers par route ; la route documentée est en tête, et la traîne des routes restantes pèse plus que toutes les autres réunies.",
     figDelaiTitre: "Ce que le prix du délai change",
@@ -132,6 +135,9 @@ const T = {
     figAttenteAria: "A single bar: hands-on work takes a thin segment on the left, waiting takes all the rest.",
     figEtapesTitre: "Where the case waits, step by step",
     figEtapesAria: "Bars of the median wait before each step; the time actually worked is noted under each bar.",
+    figCarteTitre: "The path actually taken",
+    figCarteAria: "Process map: the documented route crosses the figure in a straight line and the departures hang below it — including two loops, one returning to the documents after a request for more information, the other going back through risk assessment after an escalation.",
+    figCarteLegende: (p) => `The eight most frequent routes, ${p} of cases. Line thickness: number of cases.`,
     figRoutesTitre: "The routes actually followed",
     figRoutesAria: "Bars of the share of cases per route; the documented route leads, and the tail of remaining routes weighs more than all the others together.",
     figDelaiTitre: "What pricing the delay changes",
@@ -256,6 +262,104 @@ function blocCohortes() {
   </div></div>`;
 }
 
+/**
+ * LA CARTE DES CHEMINS.
+ *
+ * « 74 routes distinctes, 40 % de conformité » est une phrase qu'on croit sur parole, et
+ * le tableau des variantes l'écrit en abrégé — lisible, mais jamais visible. Dessinée, la
+ * route documentée devient une ligne droite et tout le reste devient ce qu'il est : des
+ * détours et deux boucles.
+ *
+ * La disposition se déduit du journal, elle n'est pas écrite à la main. L'épine dorsale
+ * est la route documentée ; toute activité qui n'en fait pas partie se place en dessous,
+ * à mi-chemin de ses voisines. Coder les positions en dur aurait lié la figure au
+ * vocabulaire de ce journal-ci, et ce vocabulaire est justement ce qu'un autre journal
+ * change en premier.
+ *
+ * Ne dessine que les huit variantes que l'écran reçoit — quatre cinquièmes des dossiers.
+ * La légende le dit : une carte qui prétendrait montrer les soixante-quatorze serait une
+ * pelote, et fausse par-dessus le marché.
+ */
+function carteDesChemins(variantes) {
+  const L = t();
+  const doc = variantes.find((v) => v.documented);
+  if (!doc) return "";
+  const epine = doc.path;
+
+  /* Les transitions, additionnées sur les variantes reçues. */
+  const arcs = new Map();
+  for (const v of variantes) {
+    for (let i = 0; i < v.path.length - 1; i++) {
+      const cle = v.path[i] + "\u0000" + v.path[i + 1];
+      arcs.set(cle, (arcs.get(cle) ?? 0) + v.cases);
+    }
+  }
+
+  /* Le cadre serre le dessin : l'épine en haut, les écarts juste dessous. Quatre-vingt-dix
+   * pixels de vide au-dessus faisaient flotter la carte au milieu de rien. */
+  const LARGE = 760, HAUT = 196, Y = 44, H = 32;
+  const pas = (LARGE - 120) / (epine.length - 1);
+  const x = new Map(epine.map((a, i) => [a, 60 + i * pas]));
+  const y = new Map(epine.map((a) => [a, Y]));
+
+  /* Les activités hors épine : sous la ligne, entre leurs voisines. */
+  const dehors = [...new Set(variantes.flatMap((v) => v.path))].filter((a) => !x.has(a));
+  dehors.forEach((a, i) => {
+    const voisines = [];
+    for (const v of variantes) {
+      const k = v.path.indexOf(a);
+      if (k > 0 && x.has(v.path[k - 1])) voisines.push(x.get(v.path[k - 1]));
+      if (k >= 0 && k < v.path.length - 1 && x.has(v.path[k + 1])) voisines.push(x.get(v.path[k + 1]));
+    }
+    x.set(a, voisines.length ? voisines.reduce((s, n) => s + n, 0) / voisines.length : LARGE / 2);
+    y.set(a, Y + 74 + (i % 2) * 42);
+  });
+
+  const largeur = (n) => Math.max(1.2, Math.min(7, Math.sqrt(n) / 4));
+  /*
+   * `markerUnits="userSpaceOnUse"` : sans lui, la pointe de flèche grandit avec l'épaisseur
+   * du trait, et l'arc le plus fréquent — 484 dossiers, donc le trait le plus large —
+   * arrivait avec une pointe deux fois plus haute que le nœud qu'elle désignait.
+   */
+  let dessin = '<defs><marker id="fl" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9"'
+    + ' refX="8" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 z" fill="currentColor" /></marker></defs>';
+
+  for (const [cle, n] of [...arcs].sort((a, b) => a[1] - b[1])) {
+    const [de, vers] = cle.split("\u0000");
+    const surEpine = y.get(de) === Y && y.get(vers) === Y && x.get(vers) > x.get(de);
+    const x1 = x.get(de) + (surEpine ? 44 : 0), y1 = y.get(de) + (surEpine ? 0 : H / 2);
+    const x2 = x.get(vers) - (surEpine ? 44 : 0), y2 = y.get(vers) + (surEpine ? 0 : -H / 2);
+    const classe = surEpine ? "arc-epine" : (x.get(vers) <= x.get(de) ? "arc-retour" : "arc-ecart");
+    /*
+     * Un retour se dessine comme un retour : il ressort par le côté et revient par le bas,
+     * au lieu de remonter tout droit. Une boucle qui ressemble à un trait vertical ne se
+     * lit pas comme une boucle, et la boucle est ce que cette figure existe pour montrer.
+     */
+    if (surEpine) {
+      dessin += `<line class="${classe}" x1="${x1.toFixed(0)}" y1="${y1}" x2="${x2.toFixed(0)}" y2="${y2}" stroke-width="${largeur(n)}" marker-end="url(#fl)" />`;
+    } else if (classe === "arc-retour") {
+      const creux = Math.max(y1, y2) + 34;
+      dessin += `<path class="${classe}" d="M${x1.toFixed(0)} ${y1} C${(x1 + 46).toFixed(0)} ${creux} ${(x2 - 46).toFixed(0)} ${creux} ${x2.toFixed(0)} ${y2}" fill="none" stroke-width="${largeur(n)}" marker-end="url(#fl)" />`;
+    } else {
+      const mi = ((y1 + y2) / 2 + 26).toFixed(0);
+      dessin += `<path class="${classe}" d="M${x1.toFixed(0)} ${y1} C${x1.toFixed(0)} ${mi} ${x2.toFixed(0)} ${mi} ${x2.toFixed(0)} ${y2}" fill="none" stroke-width="${largeur(n)}" marker-end="url(#fl)" />`;
+    }
+  }
+
+  for (const [a, ax] of x) {
+    const ay = y.get(a), sur = ay === Y, fin = a === epine[epine.length - 1];
+    const w = Math.max(74, Math.min(120, a.length * 7.2));
+    dessin += `<g class="noeud${sur ? " epine" : ""}${fin ? " fin" : ""}">`
+      + `<rect x="${(ax - w / 2).toFixed(0)}" y="${ay - H / 2}" width="${w}" height="${H}" />`
+      + `<text x="${ax.toFixed(0)}" y="${ay + 4}" text-anchor="middle">${esc(a)}</text></g>`;
+  }
+
+  const part = variantes.reduce((s, v) => s + v.share, 0);
+  return `<figure class="graphe"><div class="defile cadre-graphe">
+    <svg viewBox="0 0 ${LARGE} ${HAUT}" role="img" aria-label="${esc(L.figCarteAria)}">${dessin}</svg>
+    </div><p class="legende-carte">${esc(L.figCarteLegende(pc(part)))}</p></figure>`;
+}
+
 function blocRoutes() {
   const L = t(), c = etat.conformance;
   $("#titreRoutes").textContent = L.titreRoutes;
@@ -280,6 +384,7 @@ function blocRoutes() {
 
   $("#routes").innerHTML = `<div class="feuillet">
     <div class="quoi">${L.routesQuoi(c.distinctPaths, pc(c.share), c.pathsForFourFifths)}</div>
+    <div class="titre-fig">${esc(L.figCarteTitre)}</div>${carteDesChemins(etat.variants)}
     <div class="titre-fig">${esc(L.figRoutesTitre)}</div>${figRoutes}
     <details><summary>${esc(L.voirChiffres)}</summary>
     <div class="defile"><table><thead><tr>
