@@ -8,6 +8,8 @@ times did each step happen, and which of the days are actually removable.
 **The finding.** The process averages **6.4 working days** and no case in it takes 6.4 days. Cases that never came back finish in 2.4; cases that came back twice take 21.6. The mean sits between two populations and describes neither, and a target set on it is met by every case that never had a problem. Meanwhile somebody was actually working for **2.3 hours** of those 6.4 days — 95.4 % of the elapsed time, the file was sitting somewhere.
 <!-- /figures:finding -->
 
+**[Try it in your browser →](https://arslanesempai-ui.github.io/process-cycle-time/)** — the seventy-four routes cases actually take, against the one the process documents.
+
 ![The two populations inside the average](images/screen.png)
 
 ```bash
