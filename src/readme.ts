@@ -18,6 +18,7 @@ import { markdown } from "./provenance.ts";
 import { ASSUMPTIONS } from "./assumptions.ts";
 import { run as emit, table } from "./figures.ts";
 import { partEcrite } from "./graphes.js";
+import { fileURLToPath } from "node:url";
 
 const events = generate();
 const times = perCase(events);
@@ -182,5 +183,5 @@ const baselines = (() => {
 
 const provenance = markdown(INVENTORY, table);
 
-emit(new URL("../README.md", import.meta.url).pathname,
+emit(fileURLToPath(new URL("../README.md", import.meta.url)),
   { finding, conformTable, timeTable, timeNote, cohortTable, reworkNote, promise, sensitivity, traps, baselines, provenance });
