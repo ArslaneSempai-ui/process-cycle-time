@@ -120,3 +120,38 @@ test("les deux copies d'une route gardent le type de la même façon", () => {
     + `  → Number(x) convertit avant que Number.isFinite puisse juger, et Number(null), `
     + `Number(""), Number([]) et Number(false) valent tous 0.`);
 });
+
+/*
+ * QUI S'EST TROMPÉ : LE CLIENT OU LE SERVEUR.
+ *
+ * Un corps trop gros et un JSON malformé sortaient en 500. Une supervision qui lit les 5xx
+ * comme « le service est cassé » réveille alors quelqu'un pour un client mal écrit — et ce
+ * qui est réellement cassé se noie dans le bruit. Convention tranchée pour les dix dépôts
+ * le 23 août 2026 ; `arbitrage` et `cascade` avaient déjà la bonne forme.
+ *
+ * Le témoin va dans les trois sens : le client fautif rend 400, la requête valide rend 200,
+ * et une route inconnue reste un 404. Sans les deux derniers, un serveur qui rendrait 400 à
+ * tout passerait ce cas.
+ */
+test("une requête mal écrite est une erreur du client, pas du serveur", async () => {
+  let fils: ChildProcess | undefined;
+  try {
+    fils = await demarrer();
+
+    const trop = await poster("/api/promesse",
+      `{"jours":1,"pad":"${"A".repeat(60_000)}"}`);
+    assert.equal(trop.status, 400, "un corps hors borne est une erreur du client");
+    assert.match(((await trop.json()) as { erreur: string }).erreur, /too large/);
+
+    assert.equal((await poster("/api/promesse", "pas du json")).status, 400,
+      "un JSON malformé est une erreur du client");
+
+    assert.equal((await poster("/api/promesse", '{"jours":9}')).status, 200,
+      "et une requête valide passe toujours");
+    assert.equal(
+      (await fetch(`http://127.0.0.1:${PORT}/api/inexistant`)).status, 404,
+      "une route inconnue reste un 404, pas un 400");
+  } finally {
+    fils?.kill();
+  }
+});

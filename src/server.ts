@@ -35,11 +35,31 @@ function json(res: ServerResponse, corps: unknown, code = 200): void {
   res.end(load);
 }
 
+/*
+ * Une requête que le client a mal écrite n'est pas une panne du serveur.
+ *
+ * Un corps trop gros et un JSON malformé sortaient en **500**. Une supervision qui lit les
+ * 5xx comme « le service est cassé » réveille donc quelqu'un pour un client mal écrit, et
+ * ce qui est réellement cassé se noie dans le bruit. `arbitrage` et `cascade` rendaient déjà
+ * 400 pour ces deux cas ; convention tranchée pour les dix dépôts le 23 août 2026.
+ *
+ * Le type sert à cela et à rien d'autre : à ce que le `catch` du bas sache **qui** s'est
+ * trompé. Sans lui il faudrait relire le message d'erreur pour le deviner, ce qui est la
+ * façon habituelle de perdre la distinction au premier remaniement.
+ */
+class RequeteInvalide extends Error {}
+
 function corps(req: IncomingMessage): Promise<Record<string, unknown>> {
   return new Promise((resoudre, rejeter) => {
     let brut = "";
-    req.on("data", (b) => { brut += b; if (brut.length > 50_000) rejeter(new Error("request too large")); });
-    req.on("end", () => { try { resoudre(brut ? JSON.parse(brut) : {}); } catch (e) { rejeter(e); } });
+    req.on("data", (b) => {
+      brut += b;
+      if (brut.length > 50_000) rejeter(new RequeteInvalide("request too large"));
+    });
+    req.on("end", () => {
+      try { resoudre(brut ? JSON.parse(brut) : {}); }
+      catch (e) { rejeter(new RequeteInvalide((e as Error).message)); }
+    });
     req.on("error", rejeter);
   });
 }
@@ -150,7 +170,8 @@ const serveur = createServer(async (req, res) => {
 
     res.writeHead(404).end("not found");
   } catch (error) {
-    json(res, { erreur: error instanceof Error ? error.message : String(error) }, 500);
+    json(res, { erreur: error instanceof Error ? error.message : String(error) },
+      error instanceof RequeteInvalide ? 400 : 500);
   }
 });
 
