@@ -110,8 +110,27 @@ const serveur = createServer(async (req, res) => {
 
     if (url.pathname === "/api/promesse" && req.method === "POST") {
       const recu = await corps(req);
-      const v = Number(recu.jours);
-      if (Number.isFinite(v)) promesseJours = Math.min(PROMESSE.haut, Math.max(PROMESSE.bas, v));
+    /*
+     * MÊME GARDE QUE LA ROUTE VOISINE, ET ELLE NE L'AVAIT PAS.
+     *
+     * `/api/hypotheses`, vingt lignes plus haut, exige `typeof v === "number"`.
+     * Celle-ci écrivait `Number(recu.jours)` puis testait `Number.isFinite` —
+     * or la conversion s'exécute avant que le test puisse juger, et
+     * `Number(null)`, `Number("")`, `Number([])`, `Number(false)` valent tous
+     * `0`, que la borne remonte à `PROMESSE.bas`.
+     *
+     * Mesuré le 23 août 2026 sur le serveur en marche : une promesse posée à
+     * douze jours, un `{"jours": null}`, et elle vaut **un jour** — avec un
+     * 200. La conformité affichée ensuite est celle d'un délai que personne
+     * n'a promis, et c'est le seul chiffre que cet écran existe pour montrer.
+     *
+     * Deux routes du même fichier, l'une gardée et l'autre non : le défaut
+     * n'était pas dans la règle, il était dans sa portée.
+     */
+      const v = recu.jours;
+      if (typeof v === "number" && Number.isFinite(v)) {
+        promesseJours = Math.min(PROMESSE.haut, Math.max(PROMESSE.bas, v));
+      }
       return json(res, etat());
     }
 

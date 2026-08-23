@@ -91,8 +91,12 @@ window.LOCAL = async (chemin, corps) => {
     return etat();
   }
   if (chemin === "/api/promesse") {
-    const v = Number(corps.jours);
-    if (Number.isFinite(v)) promesseJours = Math.min(PROMESSE.haut, Math.max(PROMESSE.bas, v));
+    /* Même garde que le serveur : deux copies d'une route se corrigent ensemble
+     * ou divergent au premier correctif. Voir le commentaire de server.ts. */
+    const v = corps.jours;
+    if (typeof v === "number" && Number.isFinite(v)) {
+      promesseJours = Math.min(PROMESSE.haut, Math.max(PROMESSE.bas, v));
+    }
     return etat();
   }
   return {};
