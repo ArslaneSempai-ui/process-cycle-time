@@ -325,11 +325,9 @@ counted; a day of delay is not, so it gets left out. That is backwards — the s
 unpriced number is worth nine times the priced one, and leaving it at zero is a decision
 disguised as an omission.
 
-**Generate the messiness before writing the conformance check.** The first version of the
-log had eight distinct routes and the documented one covered 59 % — too tidy to demonstrate
-anything, and I nearly wrote the finding around it. Adding the mechanisms that actually
-occur (a pre-triaged channel, chasers, escalations that send an assessment back) took it to
-74 routes and 40 %, which is the shape of a real log.
+<!-- figures:messiness -->
+**Generate the messiness before writing the conformance check.** The first version of the log had eight distinct routes and the documented one covered 59 % — figures from before this repository, kept as history and not recomputed here. Too tidy to demonstrate anything, and I nearly wrote the finding around it. Adding the mechanisms that actually occur (a pre-triaged channel, chasers, escalations that send an assessment back) took it to **74 routes** and **40.3 %**, which is the shape of a real log.
+<!-- /figures:messiness -->
 
 ---
 

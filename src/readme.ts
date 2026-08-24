@@ -183,5 +183,23 @@ const baselines = (() => {
 
 const provenance = markdown(INVENTORY, table);
 
+/*
+ * DEUX PAIRES DE CHIFFRES DANS UN MÊME PARAGRAPHE, ET UNE SEULE EST RECALCULABLE.
+ *
+ * « 74 routes et 40 % » était écrit à la main **vingt lignes après avoir été engendré plus
+ * haut** : deux mentions du même nombre dans un même document, dont une seule se met à jour.
+ * Le jour où le journal change, la page se contredit elle-même et rien ne le dit.
+ *
+ * « huit routes, 59 % » décrit l'état d'AVANT ce dépôt. Aucun code ici ne le reproduit, donc
+ * il reste en prose — et le texte le déclare, plutôt que de laisser croire à une mesure.
+ */
+const messiness = `**Generate the messiness before writing the conformance check.** The first `
+  + `version of the log had eight distinct routes and the documented one covered 59 % — `
+  + `figures from before this repository, kept as history and not recomputed here. Too tidy `
+  + `to demonstrate anything, and I nearly wrote the finding around it. Adding the mechanisms `
+  + `that actually occur (a pre-triaged channel, chasers, escalations that send an assessment `
+  + `back) took it to **${c.distinctPaths} routes** and **${pc(c.share)}**, which is the shape `
+  + `of a real log.`;
+
 emit(fileURLToPath(new URL("../README.md", import.meta.url)),
-  { finding, conformTable, timeTable, timeNote, cohortTable, reworkNote, promise, sensitivity, traps, baselines, provenance });
+  { messiness, finding, conformTable, timeTable, timeNote, cohortTable, reworkNote, promise, sensitivity, traps, baselines, provenance });
