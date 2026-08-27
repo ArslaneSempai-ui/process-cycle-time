@@ -17,7 +17,37 @@ import { isMain } from "./cli.ts";
 import type { Assumptions } from "./assumptions.ts";
 import { fileURLToPath } from "node:url";
 
-const PORT = Number(process.env.PORT ?? 4900);
+/**
+ * `Number("")` VAUT 0, ET LE PORT 0 VEUT DIRE « DONNE-M'EN UN AU HASARD ».
+ *
+ * `Number(process.env.PORT ?? 4900)` convertit avant de juger, et il n'y a rien après pour
+ * juger. Les deux entrées franchement fausses sont bruyantes — Node refuse `NaN` et 99999
+ * avec un `ERR_SOCKET_BAD_PORT` — mais `PORT=""` est SILENCIEUSE et c'est la seule qui
+ * compte : mesuré ici le 27 août 2026, le serveur écoute réellement sur **49798**, un port
+ * éphémère donné par le noyau, et annonce à l'opérateur `http://localhost:0`. L'adresse
+ * annoncée n'est pas l'adresse servie. Celui qui ouvre le lien ne trouve rien et en conclut
+ * que l'outil est cassé, ce qui est la façon la plus coûteuse de se tromper d'endroit.
+ *
+ * `PORT=` vide arrive tout seul : une variable d'environnement déclarée et non remplie, un
+ * `.env` avec une ligne `PORT=`, un lanceur qui passe une chaîne vide plutôt que rien.
+ *
+ * Le refus est donc explicite et nomme l'issue. Il vaut mieux qu'un démarrage réussi sur une
+ * adresse que personne ne connaît.
+ */
+export function portValide(brut: string | undefined, defaut: number): number {
+  if (brut === undefined) return defaut;
+  const n = Number(brut);
+  if (!Number.isInteger(n) || n < 1 || n > 65535) {
+    throw new RangeError(
+      `PORT=${JSON.stringify(brut)} n'est pas un port. Un port est un entier de 1 à 65535 ; `
+      + `une chaîne vide vaut 0 après conversion, et le port 0 fait écouter le serveur sur un `
+      + `port éphémère tiré par le noyau pendant qu'il annonce « localhost:0 ». `
+      + `Ne pas définir PORT du tout pour prendre ${defaut}, ou lui donner un port.`);
+  }
+  return n;
+}
+
+const PORT = portValide(process.env.PORT, 4900);
 
 let assumptions: Assumptions = { ...ASSUMPTIONS };
 
@@ -48,6 +78,42 @@ function json(res: ServerResponse, corps: unknown, code = 200): void {
  * façon habituelle de perdre la distinction au premier remaniement.
  */
 class RequeteInvalide extends Error {}
+
+/**
+ * CETTE REQUÊTE VIENT-ELLE D'UNE PAGE QUE CE SERVEUR N'A PAS SERVIE ?
+ *
+ * Écouter sur la boucle locale met l'outil hors de portée du RÉSEAU, pas hors de portée du
+ * NAVIGATEUR. N'importe quelle page ouverte par le lecteur peut POSTer sur `localhost` : en
+ * forme simple il n'y a pas de pré-vol, et l'absence d'en-têtes CORS empêche seulement
+ * l'attaquant de LIRE la réponse — l'état a déjà changé.
+ *
+ * Mesuré ici le 27 août 2026, serveur en marche sur 4977 :
+ * `curl -X POST -H 'Origin: https://evil.example' -H 'Content-Type: text/plain'
+ *  --data '{"jours":30}' …/api/promesse` → **200**, et le délai promis passe de 5 à 30 jours.
+ * Le même appel sur `/api/hypotheses` met `costPerDayOfDelay` à 0 → la valeur annuelle
+ * affichée tombe de 2 181 639 $ à 253 041 $. C'est le seul chiffre que cet écran existe pour
+ * montrer, et une page tierce le réécrit sans un mot.
+ *
+ * COMPARÉ À L'HÔTE DE LA REQUÊTE, PAS À UNE LISTE ÉCRITE. La première forme qui vient à
+ * l'esprit est `origine === "http://localhost:4900"`, et elle refuse l'écran DE CE SERVEUR
+ * dès qu'on le sert sous un autre nom — un port choisi par `PORT=`, une machine de démo, un
+ * relais. Une garde qui refuse l'usage légitime se fait retirer à la première plainte, et
+ * elle emporte la faille avec elle. Une page servie PAR ce serveur porte forcément le même
+ * hôte que la requête qu'elle émet ; une page hostile en porte un autre.
+ *
+ * Aucun `Origin` du tout passe : c'est curl, un test, un formulaire de même origine. Les
+ * navigateurs l'envoient sur toute requête inter-origine, qui est le cas gardé ici.
+ */
+function origineEtrangere(req: IncomingMessage): boolean {
+  const origine = req.headers.origin;
+  if (!origine) return false;
+  try {
+    return new URL(origine).host !== req.headers.host;
+  } catch {
+    /* Un Origin qui ne s'analyse pas n'est pas un Origin que ce serveur a servi. */
+    return true;
+  }
+}
 
 function corps(req: IncomingMessage): Promise<Record<string, unknown>> {
   return new Promise((resoudre, rejeter) => {
@@ -104,6 +170,19 @@ export function etat() {
 
 const serveur = createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", `http://localhost:${PORT}`);
+
+  /*
+   * Seules les méthodes qui changent quelque chose. Un GET inter-origine ne peut pas être
+   * relu sans en-têtes CORS, et le refuser casserait l'inclusion de cet écran, qui est
+   * légitime.
+   */
+  if (req.method !== "GET" && req.method !== "HEAD" && origineEtrangere(req)) {
+    return json(res, {
+      erreur: "origine_etrangere",
+      dit: "cette requête vient d'une page que ce serveur n'a pas servie",
+    }, 403);
+  }
+
   try {
     if (url.pathname === "/") {
       const html = readFileSync(fileURLToPath(new URL("./ui.html", import.meta.url)), "utf8");
