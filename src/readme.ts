@@ -165,6 +165,20 @@ const traps = TRAPS.map((t) =>
   `**How to catch it.** ${t.caught.replace(/\s+/g, " ")}`,
 ).join("\n\n");
 
+/*
+ * LE MÊME RAPPORT EST CITÉ DEUX FOIS DANS CE DOCUMENT, ET UNE SEULE ÉTAIT MÉCANIQUE.
+ *
+ * Le tableau des références publiait « 32× », engendré. Quarante lignes plus bas, la section
+ * « ce que ceci ne permet pas de conclure » écrivait « 33× » à la main — et les deux se
+ * contredisaient DÉJÀ, dans le même README, sans que rien ne lève. C'est le défaut que
+ * `figures.ts` décrit dans son propre en-tête, arrivé ici.
+ *
+ * Le rapport se calcule donc une fois, et les deux phrases le lisent.
+ */
+const meilleur = props.reduce((hi, x) => (x.daysSaved > hi.daysSaved ? x : hi), props[0]!);
+const rapportEtape = props.find((x) => x.name === "automate the slowest step")!;
+const FACTEUR_REPRISE = (meilleur.daysSaved / Math.max(rapportEtape.daysSaved, 0.01)).toFixed(0);
+
 const baselines = (() => {
   const t = table(
     ["Proposal", "What it needs", "Days off the clock"],
@@ -173,13 +187,17 @@ const baselines = (() => {
       p.needs, "**" + p.daysSaved.toFixed(2) + "**",
     ]),
   );
-  const best = props.reduce((hi, x) => (x.daysSaved > hi.daysSaved ? x : hi), props[0]!);
-  const report = props.find((x) => x.name === "automate the slowest step")!;
   return `${t}\n\n` + props.map((p) => `- **${p.name}** — ${p.why}`).join("\n") +
-    `\n\nThe only proposal that moves the clock is worth **${(best.daysSaved / Math.max(report.daysSaved, 0.01)).toFixed(0)}×** ` +
+    `\n\nThe only proposal that moves the clock is worth **${FACTEUR_REPRISE}×** ` +
     `the one a step-average report suggests, and it is the only one that needed looking at ` +
     `individual cases rather than at the report.`;
 })();
+
+/** La même comparaison, dans la section des limites — le chiffre vient d'une seule source. */
+const pasToujours =
+  `**Not "rework is always the answer."** Rework is the answer *here*, by ${FACTEUR_REPRISE}× over the\n` +
+  `alternative a step-average report suggests. On a process with no loops the same analysis\n` +
+  `would say something else, and would say it just as quickly.`;
 
 const provenance = markdown(INVENTORY, table);
 
@@ -202,4 +220,4 @@ const messiness = `**Generate the messiness before writing the conformance check
   + `of a real log.`;
 
 emit(fileURLToPath(new URL("../README.md", import.meta.url)),
-  { messiness, finding, conformTable, timeTable, timeNote, cohortTable, reworkNote, promise, sensitivity, traps, baselines, provenance });
+  { messiness, finding, conformTable, timeTable, timeNote, cohortTable, reworkNote, promise, sensitivity, traps, baselines, pasToujours, provenance });

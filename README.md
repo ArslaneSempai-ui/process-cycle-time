@@ -300,9 +300,11 @@ would look like rigour while being the opposite.
 mechanism is what matters and the rate is mine. What travels is that the split is worth
 measuring before scoping anything, and that almost nobody has.
 
-**Not "rework is always the answer."** Rework is the answer *here*, by 33× over the
+<!-- figures:pasToujours -->
+**Not "rework is always the answer."** Rework is the answer *here*, by 32× over the
 alternative a step-average report suggests. On a process with no loops the same analysis
 would say something else, and would say it just as quickly.
+<!-- /figures:pasToujours -->
 
 **Not "remove all the rework."** The figure is an upper bound and labelled one. A customer
 sending the wrong document is not something a process change prevents, and the honest use of
