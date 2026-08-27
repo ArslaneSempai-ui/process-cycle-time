@@ -2,10 +2,18 @@
  * The event log — one row per thing that happened, which is the only honest input.
  *
  * A process is normally described to you as a diagram and reported to you as an average:
- * eleven days end to end, four steps, here is the box that takes longest. Both are
+ * say eleven days end to end, four steps, here is the box that takes longest. Both are
  * summaries, and every question worth asking dies in the summary.
  *
- * Whether a case followed the diagram at all. Whether the eleven days were spent working or
+ * That "eleven" is an INVENTED illustration of what a report hands you — it is not this
+ * log's figure, which is computed and published by `readme.ts`. The distinction is not
+ * pedantry: the sentence below was lifted out of this comment and served as the headline of
+ * the README and of the hosted screen, stating a lead time and a waiting time that this log
+ * has never produced — and sitting two lines above the generated block that measures both.
+ * `titre.test.ts` now holds those surfaces to the measurement, so the contradiction cannot
+ * come back silently; this paragraph is here so nobody promotes the illustration again.
+ *
+ * Whether a case followed the diagram at all. Whether those days were spent working or
  * waiting. Whether the slow step is slow once or quick three times. Whether the average is
  * an average of one population or two. None of that survives aggregation, and all of it is
  * the ordinary content of a process review.

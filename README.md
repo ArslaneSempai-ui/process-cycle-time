@@ -1,4 +1,4 @@
-# Eleven days, and nobody worked on it for nine of them
+# Six days end to end, and two hours of work in them
 
 An event log from a back-office process — case, activity, who, when — and the four questions
 a process report cannot answer: did anybody follow the diagram, was anyone working, how many

@@ -15,8 +15,21 @@ import { fileURLToPath } from "node:url";
 
 import { readFileSync, writeFileSync, mkdirSync, cpSync, existsSync } from "node:fs";
 import { isMain } from "./cli.ts";
+import { totalValue } from "./sensitivity.ts";
+import { ASSUMPTIONS } from "./assumptions.ts";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
+
+/**
+ * LE FACTEUR DE LA BANNIÈRE SE CALCULE, IL NE S'ÉCRIT PAS.
+ *
+ * Cette phrase disait « fall by a factor of nine ». Mesuré : 8,6 — et le README, qui engendre
+ * la même comparaison, publie bien `**A factor of 8.6**` deux clics plus loin. Le chiffre
+ * était donc arrondi à la main dans la seule des deux surfaces que rien ne recalcule, celle
+ * qu'un visiteur lit EN PREMIER. Le jour où une hypothèse bouge, le README suit et la
+ * bannière reste, et les deux se contredisent sans que rien ne lève.
+ */
+const FACTEUR = (totalValue(ASSUMPTIONS) / totalValue({ ...ASSUMPTIONS, costPerDayOfDelay: 0 })).toFixed(1);
 
 const SHIM = `<script>window.LOCAL_PRET = new Promise((r) => { window.LOCAL_POSE = r; });</script>\n<script type="module">
 import { generate, days } from "./js/events.js";
@@ -88,7 +101,7 @@ const BANNER = `<p class="renvoi" style="margin-bottom:1.5rem">
 This runs entirely in your browser — no server, nothing leaves your machine. The event log is
 <b>synthetic and seeded</b>. <b>Drag the promise line</b> across the three populations and read who your
 service level actually serves — then set the cost of a day of delay to zero, at the bottom,
-and watch the value of the same work fall by a factor of nine. <a href="https://github.com/ArslaneSempai-ui/process-cycle-time">Source and method</a>.
+and watch the value of the same work fall by a factor of ${FACTEUR}. <a href="https://github.com/ArslaneSempai-ui/process-cycle-time">Source and method</a>.
 </p>`;
 
 export function build(): void {

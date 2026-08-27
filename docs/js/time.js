@@ -1,5 +1,5 @@
 /**
- * Where the eleven days went.
+ * Where the six days go.
  *
  * A process report gives you an average end-to-end time and an average per step, and both
  * are true and neither is useful. The two questions that decide what to do about it are

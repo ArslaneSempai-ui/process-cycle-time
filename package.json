@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Eleven days, and nobody worked on it for nine of them.",
+  "description": "Six days end to end, and two hours of work in them.",
   "scripts": {
     "start": "node src/server.ts",
     "paths": "node src/paths.ts",
