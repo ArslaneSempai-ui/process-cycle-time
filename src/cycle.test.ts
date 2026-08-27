@@ -77,6 +77,10 @@ test("a step average and a per-case cost rank steps differently", () => {
 });
 
 test("the documented route is a minority, and the log says by how much", () => {
+  /* piege:ok-cas compte-non-tenu — « four fifths » n'est pas un compte de choses, c'est la
+     FRACTION 4/5 écrite en toutes lettres, et elle nomme le champ qu'elle éprouve
+     (`pathsForFourFifths`). Il n'y a rien à tenir : le jour où le seuil bouge, c'est le nom
+     du champ qui bouge avec lui, et le cas ne compile plus. */
   const c = conformance();
   assert.ok(c.share < 0.6, `${(c.share * 100).toFixed(1)} % conform — too clean to demonstrate anything`);
   assert.ok(c.distinctPaths > 20, `only ${c.distinctPaths} routes — a real log has far more`);

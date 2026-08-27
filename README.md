@@ -343,7 +343,7 @@ disguised as an omission.
 | The waiting share | A test fails if working time stops being a small share of elapsed |
 | The denominator claim | A test fails if no step repeats, because then it cannot be demonstrated |
 | Every trap | A test fails if its evidence stops supporting its claim |
-| The recommendation | Compared against three proposals that need no analysis at all |
+| The recommendation | Compared against every proposal that needs no analysis at all |
 | The draw | Seeded — a stranger running `npm test` gets these exact numbers |
 
 ---
