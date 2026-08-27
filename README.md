@@ -156,7 +156,7 @@ contradicts, and each is the ordinary output of a real reporting tool.
 
 **Appears to say.** We average six working days end to end. Set the target at five and push the team.
 
-**Actually.** Two populations, not one. Cases that never came back finish in under three days; cases that came back twice take three weeks. Nothing sits at six. A target of five is met by every clean case without anybody doing anything, and is unreachable for the rest no matter what they do.
+**Actually.** Two populations, not one. Cases that never came back finish in under three days; cases that came back twice take twenty-one working days. Nothing sits at six. A target of five is met by every clean case without anybody doing anything, and is unreachable for the rest no matter what they do.
 
 ```
   headline mean          6.4 days
@@ -275,7 +275,7 @@ The only proposal that moves the clock is worth **32×** the one a step-average 
 | measured | `per-case step cost` | total minutes over cases, rather than over occurrences | the denominator a step-average report gets wrong whenever a step can repeat |
 | assumed | `loadedHourlyCost` | fully loaded cost of an analyst hour | your finance team knows this exactly |
 | assumed | `casesPerYear` | volume through this process in a year | you know this one; it scales the answer and changes no decision |
-| assumed | `costPerDayOfDelay` | what one working day of delay costs, per case | the least knowable figure here and the one that decides — priced at zero it changes the answer ninefold |
+| assumed | `costPerDayOfDelay` | what one working day of delay costs, per case | the least knowable figure here and the one that decides — priced at zero it changes the answer by a factor of 8.6 |
 | chosen | `TOUCH_MINUTES` | how long each activity takes somebody | nobody publishes these, and they are the smaller half of the story — the waiting dominates |
 | chosen | `CONFIG` | 1,200 cases, 34 % rework, 17 % arriving pre-triaged | the mechanisms are the ones that actually occur; their rates are mine |
 | chosen | `DOCUMENTED_PATH` | the route the procedure describes: received → triaged → documents checked → risk assessed → approved | a stand-in for a real procedure document, which is the thing conformance is measured against |
@@ -323,9 +323,9 @@ found the two populations later. The cohort split is the whole finding and it sh
 been the first chart, not the fourth.
 
 **Price the delay before pricing the hours.** Analyst hours are knowable, so they get
-counted; a day of delay is not, so it gets left out. That is backwards — the sweep shows the
-unpriced number is worth nine times the priced one, and leaving it at zero is a decision
-disguised as an omission.
+counted; a day of delay is not, so it gets left out. That is backwards — the sweep above
+shows the unpriced number is worth 8.6 times the priced one, and leaving it at zero is a
+decision disguised as an omission.
 
 <!-- figures:messiness -->
 **Generate the messiness before writing the conformance check.** The first version of the log had eight distinct routes and the documented one covered 59 % — figures from before this repository, kept as history and not recomputed here. Too tidy to demonstrate anything, and I nearly wrote the finding around it. Adding the mechanisms that actually occur (a pre-triaged channel, chasers, escalations that send an assessment back) took it to **74 routes** and **40.3 %**, which is the shape of a real log.

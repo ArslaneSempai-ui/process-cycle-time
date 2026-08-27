@@ -13,6 +13,7 @@
  */
 
 import { ASSUMPTIONS } from "./assumptions.ts";
+import { totalValue } from "./sensitivity.ts";
 import { CONFIG, TOUCH_MINUTES, DOCUMENTED_PATH } from "./events.ts";
 import type { Inventory } from "./provenance.ts";
 
@@ -66,7 +67,12 @@ export const INVENTORY: Inventory = [
     name: "costPerDayOfDelay",
     provenance: "assumed",
     what: "what one working day of delay costs, per case",
-    note: "the least knowable figure here and the one that decides — priced at zero it changes the answer ninefold",
+    /* LE FACTEUR SE CALCULE ICI AUSSI. Cette note disait « ninefold » ; mesuré, 8,6 — et le
+       bloc `sensitivity` du même README publie déjà « A factor of 8.6 ». La note voyage
+       DANS un bloc engendré, ce qui la fait passer pour recalculée alors qu'elle est tapée :
+       régénérer ne la corrigeait pas. Même correctif que la bannière de `pages.ts`. */
+    note: "the least knowable figure here and the one that decides — priced at zero it changes "
+      + `the answer by a factor of ${(totalValue(ASSUMPTIONS) / totalValue({ ...ASSUMPTIONS, costPerDayOfDelay: 0 })).toFixed(1)}`,
   },
 
   /* ── chosen ── */

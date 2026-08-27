@@ -31,7 +31,7 @@ export const TRAPS: Trap[] = [
       "We average six working days end to end. Set the target at five and push the team.",
     truth:
       "Two populations, not one. Cases that never came back finish in under three days; " +
-      "cases that came back twice take three weeks. Nothing sits at six. A target of five " +
+      "cases that came back twice take twenty-one working days. Nothing sits at six. A target of five " +
       "is met by every clean case without anybody doing anything, and is unreachable for " +
       "the rest no matter what they do.",
     caught:

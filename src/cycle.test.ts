@@ -123,6 +123,55 @@ test("every trap's evidence supports the claim it makes", () => {
   const surv = TRAPS.find((t) => t.id === "T-SURVIVOR")!.evidence().join("\n");
   const s = [...surv.matchAll(/([\d.]+) days/g)].map((m) => Number(m[1]));
   assert.ok(s[1]! < s[0]!, "the survivor mean must be lower, or the trap is not one");
+
+  /*
+   * ET LES TROIS AUTRES, QUI NE TENAIENT QUE LEUR PRÉSENCE.
+   *
+   * Ce cas s'appelle « every trap's evidence supports the claim it makes », et le tableau de
+   * revue du README promet la même chose — « Every trap | A test fails if its evidence stops
+   * supporting its claim ». Il ne l'éprouvait que pour DEUX pièges sur cinq. Les trois autres
+   * passaient sur « la preuve n'est pas vide » et « les champs font plus de trente
+   * caractères » : de la présence, pas du soutien. La preuve de T-TOUCH pouvait annoncer
+   * l'inverse de sa conclusion sans que rien ne tombe, et le tableau continuait de promettre
+   * qu'un test l'aurait vu.
+   */
+  const preuve = (id: string) => TRAPS.find((t) => t.id === id)!.evidence().join("\n");
+
+  /* T-TOUCH — « retirer le plus gros travail retire moins d'une heure sur les deux »
+     n'a de sens que si le retrait est INFÉRIEUR au travail total, et si l'attente domine. */
+  const touch = preuve("T-TOUCH");
+  const [sauve, travail] = touch.match(/saves ([\d.]+) h of the ([\d.]+) h/)!.slice(1).map(Number);
+  assert.ok(sauve! < travail!,
+    `removing the slowest activity saves ${sauve} h of ${travail} h worked — the trap claims it saves less than the whole`);
+  const attente = Number(touch.match(/([\d.]+) % of elapsed/)![1]);
+  assert.ok(attente > 90, `waiting is ${attente} % of elapsed — the trap claims the process is mostly waiting`);
+
+  /* T-STEPAVG — la moyenne par occurrence ment SEULEMENT si une activité revient plus d'une
+     fois par dossier ; il faut donc au moins une ligne où par-cas dépasse par-occurrence. */
+  const lignes = [...preuve("T-STEPAVG").matchAll(/([\d.]+)\s+(\d+) min\s+(\d+) min/g)]
+    .map((m) => ({ fois: Number(m[1]), occurrence: Number(m[2]), parCas: Number(m[3]) }));
+  assert.ok(lignes.length > 0, "the step-average evidence no longer parses — the guard would pass on nothing");
+  assert.ok(lignes.some((l) => l.fois > 1 && l.parCas > l.occurrence),
+    "no activity costs more per case than per occurrence — the step-average trap has nothing to show");
+  /* ET SUR LA LIGNE QUE LE PIÈGE NOMME. Un `some` sur toutes les activités survit à la
+     mutation de n'importe laquelle : la contre-épreuve qui cassait « documents checked »
+     restait verte grâce à « risk assessed ». Le piège affirme une activité précise — celle
+     qui revient 1,5 fois par dossier — donc c'est elle qu'il faut tenir. */
+  const nomme = preuve("T-STEPAVG").match(/documents checked\s+([\d.]+)\s+(\d+) min\s+(\d+) min/);
+  assert.ok(nomme, "the activity the step-average trap names is no longer in its own evidence");
+  const [fois, occ, parCas] = nomme!.slice(1).map(Number);
+  assert.ok(fois! > 1 && parCas! > occ!,
+    `documents checked: ${fois}×/case, ${occ} min per occurrence, ${parCas} min per case — `
+    + "the trap claims this row is where the step average lies, and it no longer does");
+
+  /* T-CONFORM — le piège est que le chemin documenté est MINORITAIRE et qu'aucune route ne
+     porte le gros du volume ; si la conformité redevenait majoritaire, il n'y aurait rien. */
+  const conform = preuve("T-CONFORM");
+  const exact = Number(conform.match(/conforming exactly\s+([\d.]+) %/)![1]);
+  const pourQuatreVingts = Number(conform.match(/routes to cover 80 %\s+(\d+)/)![1]);
+  assert.ok(exact < 50, `${exact} % conform — the trap claims the documented route is a minority`);
+  assert.ok(pourQuatreVingts > 1,
+    `one route covers 80 % of cases — the trap claims the volume is spread, and it is not`);
 });
 
 test("the analysis beats the proposals that need no analysis", () => {
