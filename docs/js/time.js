@@ -123,7 +123,7 @@ if (isMain(import.meta)) {
     const c = slowestAgainstCostliest(steps);
     console.log(c.same
         ? `\nThe slowest step and the costliest are both \`${c.slowest.activity}\`.`
-        : `\nA report ranks by the middle column and names \`${c.slowest.activity}\` — ` +
+        : `\nA report ranks by the middle column and names \`${c.slowest.activity}\`: ` +
             `${c.slowest.meanPerOccurrence.toFixed(0)} min a time.\n` +
             `What costs a case most is \`${c.costliest.activity}\`, at ` +
             `${c.costliest.meanPerCase.toFixed(0)} min, because it happens ` +

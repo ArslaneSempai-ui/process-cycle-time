@@ -112,14 +112,14 @@ function rapporter() {
     console.log(`\nThe headline average is ${cost.meanDaysBefore.toFixed(1)} days. No cohort above is at ` +
         `${cost.meanDaysBefore.toFixed(1)} days.\nIt is an average of two populations that do not ` +
         `overlap, and a target set on it is met\nby the cases that never had a problem.`);
-    console.log(`\n\n${cost.affectedCases.toLocaleString("en-GB")} cases went round the loop — ` +
+    console.log(`\n\n${cost.affectedCases.toLocaleString("en-GB")} cases went round the loop, ` +
         `${pc(cost.share)} [${pc(cost.low)} – ${pc(cost.high)}].\n` +
         `Each one spends an extra ${cost.extraDaysPerCase.toFixed(1)} working days there.\n` +
         `\nRemoving all of it: ${cost.meanDaysBefore.toFixed(1)} days → ${cost.meanDaysIfNoRework.toFixed(1)} days end to end, ` +
         `and ${money(cost.extraCostPerYear)} a year of analyst time.\n` +
         `\nThat is an upper bound and is meant as one: some rework is a customer sending the wrong\n` +
         `file, and no process change prevents that. What the figure is for is comparing against\n` +
-        `the cost of the change — which is the comparison nobody makes before starting.\n`);
+        `the cost of the change, which is the comparison nobody makes before starting.\n`);
 }
 if (isMain(import.meta))
     rapporter();

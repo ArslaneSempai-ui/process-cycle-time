@@ -105,7 +105,7 @@ if (isMain(import.meta)) {
     console.log("The procedure says:");
     console.log("  " + DOCUMENTED_PATH.join(" → ") + "\n");
     console.log(`Cases that followed it exactly: ${c.conforming.toLocaleString("en-GB")} of ` +
-        `${c.totalCases.toLocaleString("en-GB")} — **${pc(c.share)}** [${pc(c.low)} – ${pc(c.high)}]\n`
+        `${c.totalCases.toLocaleString("en-GB")}, **${pc(c.share)}** [${pc(c.low)} – ${pc(c.high)}]\n`
             .replace(/\*\*/g, ""));
     console.log("The routes actually taken\n");
     console.log("  cases    share   rework   route");

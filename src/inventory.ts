@@ -23,7 +23,7 @@ export const INVENTORY: Inventory = [
     name: "lead time, median, p90",
     provenance: "measured",
     what: "wall-clock from first event to last, per case",
-    note: "straight out of the event log — no model between the data and the figure",
+    note: "straight out of the event log; no model between the data and the figure",
   },
   {
     name: "waiting share",
@@ -71,7 +71,7 @@ export const INVENTORY: Inventory = [
        bloc `sensitivity` du même README publie déjà « A factor of 8.6 ». La note voyage
        DANS un bloc engendré, ce qui la fait passer pour recalculée alors qu'elle est tapée :
        régénérer ne la corrigeait pas. Même correctif que la bannière de `pages.ts`. */
-    note: "the least knowable figure here and the one that decides — priced at zero it changes "
+    note: "the least knowable figure here and the one that decides; priced at zero it changes "
       + `the answer by a factor of ${(totalValue(ASSUMPTIONS) / totalValue({ ...ASSUMPTIONS, costPerDayOfDelay: 0 })).toFixed(1)}`,
   },
 
@@ -80,7 +80,7 @@ export const INVENTORY: Inventory = [
     name: "TOUCH_MINUTES",
     provenance: "chosen",
     what: "how long each activity takes somebody",
-    note: "nobody publishes these, and they are the smaller half of the story — the waiting dominates",
+    note: "nobody publishes these, and they are the smaller half of the story; the waiting dominates",
   },
   {
     name: "CONFIG",

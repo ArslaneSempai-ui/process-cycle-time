@@ -51,7 +51,7 @@ if (isMain(import.meta)) {
             `${(Number.isFinite(b.spread) ? b.spread.toFixed(1) + "×" : "∞").padStart(10)}`);
     }
     const zero = totalValue({ ...ASSUMPTIONS, costPerDayOfDelay: 0 });
-    console.log(`\nWith a day of delay priced at zero — which is what happens when nobody can name it —` +
+    console.log(`\nWith a day of delay priced at zero (which is what happens when nobody can name it),` +
         `\nthe same work is worth ${money(zero)} rather than ${money(base)}. ` +
         `That is a factor of ${(base / zero).toFixed(1)},` +
         `\nand it is the difference between a project that gets funded and one that does not.` +

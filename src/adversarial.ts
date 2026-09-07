@@ -53,7 +53,7 @@ export const TRAPS: Trap[] = [
     id: "T-TOUCH",
     name: "Making the slow step faster fixes almost nothing",
     appears:
-      "Risk assessment takes the longest — nearly an hour. Automate it and the process gets " +
+      "Risk assessment takes the longest, nearly an hour. Automate it and the process gets " +
       "materially quicker.",
     truth:
       "The whole process involves about two hours of actual work spread over six days. " +
@@ -89,7 +89,7 @@ export const TRAPS: Trap[] = [
       "A step average divides total minutes by *occurrences*, not by cases. Document " +
       "checking happens 1.5 times per case because cases come back; assessment happens " +
       "once. Per case the gap nearly closes, and a slightly higher rework rate reverses it " +
-      "outright — while the report never moves.",
+      "outright, while the report never moves.",
     caught:
       "Ask what the denominator is. If a step can repeat, the number you want is total " +
       "minutes over *cases*, and no reporting tool computes it by default.",
@@ -111,7 +111,7 @@ export const TRAPS: Trap[] = [
     truth:
       "Those cases arrive through a channel that triages upstream. The step is not being " +
       "skipped, it is being done somewhere the log does not describe as triage. The " +
-      "procedure documents one route and the business runs two — and calling the second one " +
+      "procedure documents one route and the business runs two, and calling the second one " +
       "a violation puts a team through a remediation for doing its job.",
     caught:
       "Before treating a deviation as a failure, look at what the cases have in common. A " +
@@ -126,7 +126,7 @@ export const TRAPS: Trap[] = [
         `  cases conforming exactly   ${pc(c.share)}`,
         `  distinct routes            ${c.distinctPaths}`,
         `  routes to cover 80 %       ${c.pathsForFourFifths}`,
-        `  cases skipping triage      ${pc(share)}   — every one of them from the pre-triaged channel`,
+        `  cases skipping triage      ${pc(share)}, every one of them from the pre-triaged channel`,
       ];
     },
   },
@@ -164,7 +164,7 @@ export const TRAPS: Trap[] = [
 if (isMain(import.meta)) {
   console.log(`\n${TRAPS.length} process reports where the obvious reading is wrong\n`);
   for (const t of TRAPS) {
-    console.log(`── ${t.id} — ${t.name}`);
+    console.log(`── ${t.id}: ${t.name}`);
     console.log(`\n   Appears to say:  ${t.appears.replace(/\s+/g, " ")}`);
     console.log(`\n   Actually:        ${t.truth.replace(/\s+/g, " ")}\n`);
     for (const line of t.evidence()) console.log(line);

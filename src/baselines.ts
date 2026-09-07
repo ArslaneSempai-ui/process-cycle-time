@@ -47,7 +47,7 @@ export function proposals(): Proposal[] {
       name: "hire more analysts",
       needs: "nothing",
       daysSaved: 0,
-      why: "capacity does not shorten a queue nobody is in — 95 % of the elapsed time is a file waiting on somebody outside the team",
+      why: "capacity does not shorten a queue nobody is in; 95 % of the elapsed time is a file waiting on somebody outside the team",
     },
     {
       name: "set a tighter target",

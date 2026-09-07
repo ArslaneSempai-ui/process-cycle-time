@@ -1,14 +1,14 @@
 # Six days end to end, and two hours of work in them
 
-An event log from a back-office process — case, activity, who, when — and the four questions
+An event log from a back-office process (case, activity, who, when) and the four questions
 a process report cannot answer: did anybody follow the diagram, was anyone working, how many
 times did each step happen, and which of the days are actually removable.
 
 <!-- figures:finding -->
-**The finding.** The process averages **6.4 working days** and no case in it takes 6.4 days. Cases that never came back finish in 2.4; cases that came back twice take 21.6. The mean sits between two populations and describes neither, and a target set on it is met by every case that never had a problem. Meanwhile somebody was actually working for **2.3 hours** of those 6.4 days — 95.4 % of the elapsed time, the file was sitting somewhere.
+**The finding.** The process averages **6.4 working days** and no case in it takes 6.4 days. Cases that never came back finish in 2.4; cases that came back twice take 21.6. The mean sits between two populations and describes neither, and a target set on it is met by every case that never had a problem. Meanwhile somebody was actually working for **2.3 hours** of those 6.4 days: 95.4 % of the elapsed time, the file was sitting somewhere.
 <!-- /figures:finding -->
 
-**[Try it in your browser →](https://arslanesempai-ui.github.io/process-cycle-time/)** — the routes cases actually take, against the one the process documents.
+**[Try it in your browser →](https://arslanesempai-ui.github.io/process-cycle-time/)**. The routes cases actually take, against the one the process documents.
 
 ![The two populations inside the average](images/screen.png)
 
@@ -34,7 +34,7 @@ The procedure describes one route:
 
 `received → triaged → documents checked → risk assessed → approved`
 
-**484 of 1,200 cases followed it exactly — 40.3 %** [37.6 % – 43.1 %]. There are **74 distinct routes**, and it takes **9** of them to cover four fifths of the cases.
+**484 of 1,200 cases followed it exactly: 40.3 %** [37.6 % – 43.1 %]. There are **74 distinct routes**, and it takes **9** of them to cover four fifths of the cases.
 
 | Cases | Share | Rework | Route |
 |---|---|---|---|
@@ -51,10 +51,10 @@ The procedure describes one route:
 
 Happens but is not in the procedure: `information requested`, `escalated`, `rejected`, `chased`.
 
-Every documented step is observed at least once — the check exists because a control everybody believes is running, and which never runs, is the most expensive thing this analysis can find.
+Every documented step is observed at least once. The check exists because a control everybody believes is running, and which never runs, is the most expensive thing this analysis can find.
 <!-- /figures:conformTable -->
 
-This is conformance checking, and it needs no models and no statistics — only the event log
+This is conformance checking, and it needs no models and no statistics, only the event log
 people already have and rarely look at. The uncomfortable direction is the usual one: the
 documented route is a **minority**, and everything downstream inherits it. A training course
 teaches the minority route, an automation is scoped to it, and a target is set on it.
@@ -78,7 +78,7 @@ teaches the minority route, an automation is scoped to it, and a target is set o
 <!-- /figures:timeTable -->
 
 <!-- figures:timeNote -->
-A step average divides total minutes by **occurrences**, not by cases. `documents checked` happens 1.50 times per case because cases come back, so the two columns disagree — and no reporting tool computes the second one by default.
+A step average divides total minutes by **occurrences**, not by cases. `documents checked` happens 1.50 times per case because cases come back, so the two columns disagree, and no reporting tool computes the second one by default.
 
 Here the slowest step and the costliest are both `risk assessed`, and the gap between the two columns has closed to 5 minutes. A slightly higher rework rate reverses it while the report never moves.
 
@@ -101,11 +101,11 @@ And every minute in both columns is dwarfed by the last one. The work is 4.6 % o
 overlap, and the two differ by a factor a report cannot show because the report has one row.
 
 <!-- figures:reworkNote -->
-419 cases went round the loop — **34.9 %** [32.3 % – 37.7 %] — and each spends an extra **11.3 working days** there.
+419 cases went round the loop (**34.9 %** [32.3 % – 37.7 %]) and each spends an extra **11.3 working days** there.
 
 Removing all of it takes the process from 6.4 days to 2.4, and returns $253,041 a year of analyst time.
 
-That is an upper bound and is meant as one: some rework is a customer sending the wrong file, and no process change prevents that. What the figure is for is comparing against the cost of the change — which is the comparison nobody makes before starting.
+That is an upper bound and is meant as one: some rework is a customer sending the wrong file, and no process change prevents that. What the figure is for is comparing against the cost of the change, which is the comparison nobody makes before starting.
 <!-- /figures:reworkNote -->
 
 ## The promise you can actually keep
@@ -113,17 +113,17 @@ That is an upper bound and is meant as one: some rework is a customer sending th
 <!-- figures:promise -->
 | Promised lead time | 3 working days | 5 working days | 8 working days |
 |---|---|---|---|
-| no rework | 84 % — 659/781 | 99 % — 780/781 | 100 % — 781/781 |
-| came back once | 0 % — 0/293 | 4 % — 13/293 | 32 % — 94/293 |
-| came back twice or more | 0 % — 0/126 | 0 % — 0/126 | 1 % — 1/126 |
+| no rework | 84 %, 659/781 | 99 %, 780/781 | 100 %, 781/781 |
+| came back once | 0 %, 0/293 | 4 %, 13/293 | 32 %, 94/293 |
+| came back twice or more | 0 %, 0/126 | 0 %, 0/126 | 1 %, 1/126 |
 
-Read the middle column. A five-day service level is met by **99 %** of the cases that never came back, **4 %** of those that came back once, and **0 %** of those that came back twice. It is not a service level on the process — it is a service level on the cases that never had a problem. Reported as a single number it reads **66 % attainment**, which hides exactly the population the promise was made to.
+Read the middle column. A five-day service level is met by **99 %** of the cases that never came back, **4 %** of those that came back once, and **0 %** of those that came back twice. It is not a service level on the process; it is a service level on the cases that never had a problem. Reported as a single number it reads **66 % attainment**, which hides exactly the population the promise was made to.
 <!-- /figures:promise -->
 
 ![Dragging the promised lead time across the three populations](images/promesse.gif)
 
 The line is the control: drag it and the three populations recount underneath. It is the
-one number on this page a reader already knows better than the model does — their own
+one number on this page a reader already knows better than the model does: their own
 service level.
 
 ---
@@ -139,7 +139,7 @@ Removing all rework is worth **$2,181,639 a year** at the assumptions in use.
 | `casesPerYear` | 14,000 | $77,916 @ 500 | $77,915,677 @ 500,000 | 1000.0× |
 | `costPerDayOfDelay` | 35 | $253,041 @ 0 | $55,355,845 @ 1,000 | 218.8× |
 
-With a day of delay priced at zero — which is what happens when nobody can name it — the same work is worth $253,041 rather than $2,181,639. **A factor of 8.6**, and the difference between a project that gets funded and one that does not.
+With a day of delay priced at zero (which is what happens when nobody can name it), the same work is worth $253,041 rather than $2,181,639. **A factor of 8.6**, and the difference between a project that gets funded and one that does not.
 
 An unpriced cost is not a cost of zero. Treating it as one is how process work loses to whatever happens to have a number attached to it.
 <!-- /figures:sensitivity -->
@@ -172,7 +172,7 @@ contradicts, and each is the ordinary output of a real reporting tool.
 
 ### Making the slow step faster fixes almost nothing
 
-**Appears to say.** Risk assessment takes the longest — nearly an hour. Automate it and the process gets materially quicker.
+**Appears to say.** Risk assessment takes the longest, nearly an hour. Automate it and the process gets materially quicker.
 
 **Actually.** The whole process involves about two hours of actual work spread over six days. Removing the single largest piece of work removes under an hour from a process where the file spends 95 % of its life sitting somewhere. The lever is the waiting, and the waiting is not an activity anybody records.
 
@@ -192,7 +192,7 @@ contradicts, and each is the ordinary output of a real reporting tool.
 
 **Appears to say.** Document checking takes 36 minutes. Risk assessment takes 56. Assessment is the bigger cost.
 
-**Actually.** A step average divides total minutes by *occurrences*, not by cases. Document checking happens 1.5 times per case because cases come back; assessment happens once. Per case the gap nearly closes, and a slightly higher rework rate reverses it outright — while the report never moves.
+**Actually.** A step average divides total minutes by *occurrences*, not by cases. Document checking happens 1.5 times per case because cases come back; assessment happens once. Per case the gap nearly closes, and a slightly higher rework rate reverses it outright, while the report never moves.
 
 ```
   activity                 times/case   per occurrence   per case
@@ -209,13 +209,13 @@ contradicts, and each is the ordinary output of a real reporting tool.
 
 **Appears to say.** Seventeen percent of cases skip triage. That is a control failure and needs enforcing.
 
-**Actually.** Those cases arrive through a channel that triages upstream. The step is not being skipped, it is being done somewhere the log does not describe as triage. The procedure documents one route and the business runs two — and calling the second one a violation puts a team through a remediation for doing its job.
+**Actually.** Those cases arrive through a channel that triages upstream. The step is not being skipped, it is being done somewhere the log does not describe as triage. The procedure documents one route and the business runs two, and calling the second one a violation puts a team through a remediation for doing its job.
 
 ```
   cases conforming exactly   40.3 %
   distinct routes            74
   routes to cover 80 %       9
-  cases skipping triage      17.3 %   — every one of them from the pre-triaged channel
+  cases skipping triage      17.3 %, every one of them from the pre-triaged channel
 ```
 
 **How to catch it.** Before treating a deviation as a failure, look at what the cases have in common. A deviation shared by a coherent group of cases is usually a second process nobody wrote down.
@@ -247,10 +247,10 @@ contradicts, and each is the ordinary output of a real reporting tool.
 | hire more analysts | nothing | **0.00** |
 | set a tighter target | nothing | **0.00** |
 
-- **remove the rework** — the two populations do not overlap; removing the loop moves the whole distribution
-- **automate the slowest step** — risk assessed is the largest single piece of work, and work is 4.6 % of elapsed time
-- **hire more analysts** — capacity does not shorten a queue nobody is in — 95 % of the elapsed time is a file waiting on somebody outside the team
-- **set a tighter target** — a target on the mean is met by cases that never had a problem, and unreachable for the ones that did
+- **remove the rework**: the two populations do not overlap; removing the loop moves the whole distribution
+- **automate the slowest step**: risk assessed is the largest single piece of work, and work is 4.6 % of elapsed time
+- **hire more analysts**: capacity does not shorten a queue nobody is in; 95 % of the elapsed time is a file waiting on somebody outside the team
+- **set a tighter target**: a target on the mean is met by cases that never had a problem, and unreachable for the ones that did
 
 The only proposal that moves the clock is worth **32×** the one a step-average report suggests, and it is the only one that needed looking at individual cases rather than at the report.
 <!-- /figures:baselines -->
@@ -268,22 +268,22 @@ The only proposal that moves the clock is worth **32×** the one a step-average 
 
 | Kind | Name | What it is | Note |
 |---|---|---|---|
-| measured | `lead time, median, p90` | wall-clock from first event to last, per case | straight out of the event log — no model between the data and the figure |
+| measured | `lead time, median, p90` | wall-clock from first event to last, per case | straight out of the event log; no model between the data and the figure |
 | measured | `waiting share` | elapsed time during which nobody was working on the case | lead time minus touch time; the column no process report carries |
 | measured | `conformance` | share of cases following the documented route exactly, and how many routes exist | with its 95 % interval, and the count of routes needed to cover four fifths |
 | measured | `cohorts` | lead time split by how many times the case came back | the finding: the headline mean sits between two populations and describes neither |
 | measured | `per-case step cost` | total minutes over cases, rather than over occurrences | the denominator a step-average report gets wrong whenever a step can repeat |
 | assumed | `loadedHourlyCost` | fully loaded cost of an analyst hour | your finance team knows this exactly |
 | assumed | `casesPerYear` | volume through this process in a year | you know this one; it scales the answer and changes no decision |
-| assumed | `costPerDayOfDelay` | what one working day of delay costs, per case | the least knowable figure here and the one that decides — priced at zero it changes the answer by a factor of 8.6 |
-| chosen | `TOUCH_MINUTES` | how long each activity takes somebody | nobody publishes these, and they are the smaller half of the story — the waiting dominates |
+| assumed | `costPerDayOfDelay` | what one working day of delay costs, per case | the least knowable figure here and the one that decides; priced at zero it changes the answer by a factor of 8.6 |
+| chosen | `TOUCH_MINUTES` | how long each activity takes somebody | nobody publishes these, and they are the smaller half of the story; the waiting dominates |
 | chosen | `CONFIG` | 1,200 cases, 34 % rework, 17 % arriving pre-triaged | the mechanisms are the ones that actually occur; their rates are mine |
 | chosen | `DOCUMENTED_PATH` | the route the procedure describes: received → triaged → documents checked → risk assessed → approved | a stand-in for a real procedure document, which is the thing conformance is measured against |
 | chosen | `no retrieved figures` | the decision to cite nothing | no public source sets a cycle time or a rework rate; citing a consultancy benchmark would look like rigour and be the opposite |
 <!-- /figures:provenance -->
 
 The combination here is unusual and worth naming: **the measurement is the most robust in
-this portfolio and the assumptions are the least knowable.** An event log is an event log —
+this portfolio and the assumptions are the least knowable.** An event log is an event log,
 the mean, the median, the rework share and the waiting share come out of it with no model in
 between, and nothing about them is arguable. What is entirely arguable is what a working day
 of delay costs, and that is the number that decides.
@@ -296,7 +296,7 @@ would look like rigour while being the opposite.
 
 ## What this does not let you conclude
 
-**Not "your process is <!--p:cycle.partAttente~pc0-->95 %<!--/p--> waiting."** This one is, because it was built to be — the
+**Not "your process is <!--p:cycle.partAttente~pc0-->95 %<!--/p--> waiting."** This one is, because it was built to be; the
 mechanism is what matters and the rate is mine. What travels is that the split is worth
 measuring before scoping anything, and that almost nobody has.
 
@@ -311,7 +311,7 @@ sending the wrong document is not something a process change prevents, and the h
 the number is as a ceiling to compare a proposal against.
 
 **Not "the diagram is wrong."** A deviation is not a violation. Seventeen percent of cases
-skip triage because they arrive through a channel that triages upstream — treating that as a
+skip triage because they arrive through a channel that triages upstream, and treating that as a
 control failure would put a team through a remediation for doing its job.
 
 ---
@@ -323,12 +323,12 @@ found the two populations later. The cohort split is the whole finding and it sh
 been the first chart, not the fourth.
 
 **Price the delay before pricing the hours.** Analyst hours are knowable, so they get
-counted; a day of delay is not, so it gets left out. That is backwards — the sweep above
+counted; a day of delay is not, so it gets left out. That is backwards: the sweep above
 shows the unpriced number is worth 8.6 times the priced one, and leaving it at zero is a
 decision disguised as an omission.
 
 <!-- figures:messiness -->
-**Generate the messiness before writing the conformance check.** The first version of the log had eight distinct routes and the documented one covered 59 % — figures from before this repository, kept as history and not recomputed here. Too tidy to demonstrate anything, and I nearly wrote the finding around it. Adding the mechanisms that actually occur (a pre-triaged channel, chasers, escalations that send an assessment back) took it to **74 routes** and **40.3 %**, which is the shape of a real log.
+**Generate the messiness before writing the conformance check.** The first version of the log had eight distinct routes and the documented one covered 59 %; figures from before this repository, kept as history and not recomputed here. Too tidy to demonstrate anything, and I nearly wrote the finding around it. Adding the mechanisms that actually occur (a pre-triaged channel, chasers, escalations that send an assessment back) took it to **74 routes** and **40.3 %**, which is the shape of a real log.
 <!-- /figures:messiness -->
 
 ---
@@ -344,11 +344,11 @@ decision disguised as an omission.
 | The denominator claim | A test fails if no step repeats, because then it cannot be demonstrated |
 | Every trap | A test fails if its evidence stops supporting its claim |
 | The recommendation | Compared against every proposal that needs no analysis at all |
-| The draw | Seeded — a stranger running `npm test` gets these exact numbers |
+| The draw | Seeded: a stranger running `npm test` gets these exact numbers |
 
 ---
 
-**Arslane Chaouche Ramdane** — six years in AML/KYC and financial crime operations, moving
+**Arslane Chaouche Ramdane**, six years in AML/KYC and financial crime operations, moving
 into BizOps and AI transformation work. Six years of that was spent inside a process like
 this one, which is why the question here is not "how do we make the slow step faster" but
 "which of these days is anybody actually able to remove".

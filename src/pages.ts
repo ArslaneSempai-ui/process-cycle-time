@@ -98,9 +98,9 @@ window.LOCAL_POSE && window.LOCAL_POSE();
 ` + "</" + "script>\n";
 
 const BANNER = `<p class="renvoi" style="margin-bottom:1.5rem">
-This runs entirely in your browser — no server, nothing leaves your machine. The event log is
+This runs entirely in your browser: no server, nothing leaves your machine. The event log is
 <b>synthetic and seeded</b>. <b>Drag the promise line</b> across the three populations and read who your
-service level actually serves — then set the cost of a day of delay to zero, at the bottom,
+service level actually serves, then set the cost of a day of delay to zero, at the bottom,
 and watch the value of the same work fall by a factor of ${FACTEUR}. <a href="https://github.com/ArslaneSempai-ui/process-cycle-time">Source and method</a>.
 </p>`;
 

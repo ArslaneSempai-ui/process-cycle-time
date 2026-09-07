@@ -74,7 +74,7 @@ if (isMain(import.meta)) {
 
   const zero = totalValue({ ...ASSUMPTIONS, costPerDayOfDelay: 0 });
   console.log(
-    `\nWith a day of delay priced at zero — which is what happens when nobody can name it —` +
+    `\nWith a day of delay priced at zero (which is what happens when nobody can name it),` +
     `\nthe same work is worth ${money(zero)} rather than ${money(base)}. ` +
     `That is a factor of ${(base / zero).toFixed(1)},` +
     `\nand it is the difference between a project that gets funded and one that does not.` +

@@ -13,9 +13,9 @@
     <div><h1 id="h1"></h1><p class="lede" id="lede"></p></div>
   </div>
 <p class="renvoi" style="margin-bottom:1.5rem">
-This runs entirely in your browser — no server, nothing leaves your machine. The event log is
+This runs entirely in your browser: no server, nothing leaves your machine. The event log is
 <b>synthetic and seeded</b>. <b>Drag the promise line</b> across the three populations and read who your
-service level actually serves — then set the cost of a day of delay to zero, at the bottom,
+service level actually serves, then set the cost of a day of delay to zero, at the bottom,
 and watch the value of the same work fall by a factor of 8.6. <a href="https://github.com/ArslaneSempai-ui/process-cycle-time">Source and method</a>.
 </p>
 
@@ -170,7 +170,7 @@ const T = {
     figEtapesTitre: "Where the case waits, step by step",
     figEtapesAria: "Bars of the median wait before each step; the time actually worked is noted under each bar.",
     figCarteTitre: "The path actually taken",
-    figCarteAria: "Process map: the documented route crosses the figure in a straight line and the departures hang below it — including two loops, one returning to the documents after a request for more information, the other going back through risk assessment after an escalation.",
+    figCarteAria: "Process map: the documented route crosses the figure in a straight line and the departures hang below it, including two loops, one returning to the documents after a request for more information, the other going back through risk assessment after an escalation.",
     figCarteLegende: (p) => `The eight most frequent routes, ${p} of cases. Line thickness: number of cases.`,
     figRoutesTitre: "The routes actually followed",
     figRoutesAria: "Bars of the share of cases per route; the documented route leads, and the tail of routes too small to show still carries a fifth of the cases.",
@@ -187,17 +187,17 @@ const T = {
     titrePromesse: "The promise you can actually keep",
     figPromesseNom: "Promised lead time, in working days",
     figPromesseTitre: "Every case, by how many times it came back",
-    figPromesseAria: "Three strata of cases on one axis of lead time — never returned, returned once, returned twice or more. A limit line the reader drags cuts each stratum, and the share of cases finishing inside the promise is written at the right of each.",
+    figPromesseAria: "Three strata of cases on one axis of lead time: never returned, returned once, returned twice or more. A limit line the reader drags cuts each stratum, and the share of cases finishing inside the promise is written at the right of each.",
     promesseEtiq: (j) => `promise: ${j} days`,
-    promesseQuoi: (propre, pire, tout) => `Drag the line. At this promise it is kept for <b>${propre}</b> of the cases that never came back and <b>${pire}</b> of those that came back twice — ${tout} overall. A service level set on the average is met by the population that never had a problem in the first place.`,
+    promesseQuoi: (propre, pire, tout) => `Drag the line. At this promise it is kept for <b>${propre}</b> of the cases that never came back and <b>${pire}</b> of those that came back twice, ${tout} overall. A service level set on the average is met by the population that never had a problem in the first place.`,
 
     titreHyp: "The assumptions",
-    hypQuoi: "The event log is measured. What turns it into a decision is not — and the least knowable figure is the one that decides.",
+    hypQuoi: "The event log is measured. What turns it into a decision is not, and the least knowable figure is the one that decides.",
     loadedHourlyCost: "Loaded cost of an analyst hour ($)",
     casesPerYear: "Cases per year",
     costPerDayOfDelay: "Cost of one day of delay, per case ($)",
     valeur: "Removing all the rework would be worth, a year",
-    zero: (v, base, f) => `At zero — which is what happens when nobody can name the figure — the same work is worth ${v} rather than ${base}. <b>A factor of ${f}</b>, and the difference between a project that gets funded and one that does not.`,
+    zero: (v, base, f) => `At zero (which is what happens when nobody can name the figure), the same work is worth ${v} rather than ${base}. <b>A factor of ${f}</b>, and the difference between a project that gets funded and one that does not.`,
     defaut: "Reset the assumptions",
 
     provenance: "Every figure on this page is <b>measured</b> from the event log, <b>assumed</b> because nobody here can know it, or <b>chosen</b> by me. None is retrieved from a public source. The README says which is which, one by one.",
@@ -285,7 +285,7 @@ function blocPromesse() {
       seuil: { v: p.jours, etiquette: L.promesseEtiq(p.jours.toFixed(1)) },
       bas: p.bornes.bas, haut: p.bornes.haut,
       fmtX: (v) => v.toFixed(0) + (Math.round(v) === 1 ? " day" : " " + L.jours),
-      compte: (dedans, n) => `${partEcrite(dedans, n)} — ${nb(dedans)}/${nb(n)}`,
+      compte: (dedans, n) => `${partEcrite(dedans, n)}, ${nb(dedans)}/${nb(n)}`,
       aria: L.figPromesseAria,
     })}
     <div class="renvoi">${L.promesseQuoi(...[liste[0], liste[liste.length - 1]].map((x) => partEcrite(dedans(x), x.valeurs.length)), partEcrite(tenus, total))}</div>
@@ -317,7 +317,7 @@ function blocCohortes() {
 
   const jauges = etat.cohorts.map((x) => `<div class="jauge${x.passes >= 2 ? " defavorable" : x.passes === 0 ? " gagnant" : ""}">
     <div class="etiquette">
-      <b>${esc(x.label)} <small>— ${nb(x.cases)} ${esc(L.colDossiers)}, ${pc(x.share)}</small></b>
+      <b>${esc(x.label)} <small>(${nb(x.cases)} ${esc(L.colDossiers)}, ${pc(x.share)})</small></b>
       <span class="valeur">${x.meanLeadDays.toFixed(1)} ${esc(L.jours)}</span>
     </div>
     <div class="piste">
